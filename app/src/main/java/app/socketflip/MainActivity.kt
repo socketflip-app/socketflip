@@ -79,6 +79,12 @@ class MainActivity : Activity() {
             setPadding(0, dp(32), 0, 0)
         })
         column.addView(button(getString(R.string.check_updates)) { openUrl(Prefs.RELEASES_URL) })
+
+        column.addView(TextView(this).apply {
+            text = getString(R.string.licence_line)
+            setPadding(0, dp(32), 0, 0)
+        })
+        column.addView(button(getString(R.string.source_code)) { openUrl(Prefs.SOURCE_URL) })
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             // Android 15+ draws edge to edge; keep content clear of the system bars.

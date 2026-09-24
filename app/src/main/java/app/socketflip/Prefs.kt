@@ -17,6 +17,9 @@ object Prefs {
     /** Latest release page; the browser shows the version and the download. */
     const val RELEASES_URL = "https://github.com/socketflip-app/socketflip/releases/latest"
 
+    /** Source code, as the GPL expects users to be able to find it. */
+    const val SOURCE_URL = "https://github.com/socketflip-app/socketflip"
+
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
 

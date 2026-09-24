@@ -1,0 +1,1 @@
+Relicensed to the GNU GPL, version 3 or later (earlier releases were MIT). Adds a "Source code (GPL-3.0)" button to the main screen.
