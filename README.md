@@ -133,8 +133,8 @@ at your own risk.
 ## Support
 
 SocketFlip is free and always will be. If it saves you time, you can leave a tip at
-<https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00> (any amount, card, Apple Pay or
-Google Pay) or on Ko-fi at <https://ko-fi.com/socketflip>. Thank you.
+<https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00> (any amount, card or Google Pay)
+or on Ko-fi at <https://ko-fi.com/socketflip>. Thank you.
 
 ## License
 
