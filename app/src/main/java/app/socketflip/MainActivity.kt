@@ -73,6 +73,12 @@ class MainActivity : Activity() {
             setPadding(0, dp(32), 0, 0)
         })
         column.addView(button(getString(R.string.tip_button)) { openTip() })
+
+        column.addView(TextView(this).apply {
+            text = getString(R.string.version_line, installedVersion())
+            setPadding(0, dp(32), 0, 0)
+        })
+        column.addView(button(getString(R.string.check_updates)) { openUrl(Prefs.RELEASES_URL) })
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             // Android 15+ draws edge to edge; keep content clear of the system bars.
@@ -99,15 +105,22 @@ class MainActivity : Activity() {
         tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
     }
 
-    /** Opens the tip page in the browser; SocketFlip itself never touches the network. */
     private fun openTip() {
         Prefs.dismissTip(this)
+        openUrl(Prefs.TIP_URL)
+    }
+
+    /** Opens a page in the browser; SocketFlip itself never touches the network. */
+    private fun openUrl(url: String) {
         try {
-            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Prefs.TIP_URL)))
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: ActivityNotFoundException) {
-            status.text = Prefs.TIP_URL
+            status.text = url
         }
     }
+
+    private fun installedVersion(): String =
+        packageManager.getPackageInfo(packageName, 0).versionName ?: "?"
 
     /** Walks the user through each missing permission, then shows the button. */
     private fun start() {

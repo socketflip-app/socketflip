@@ -22,6 +22,8 @@
     <string name="tip_button">Donate</string>
     <string name="tip_prompt">Enjoying SocketFlip? It is free, open source and ad-free. If it has saved you some time, a small tip really helps.</string>
     <string name="tip_not_now">Not now</string>
+    <string name="version_line">You have version %1$s. SocketFlip never checks online by itself; this opens the latest release in your browser.</string>
+    <string name="check_updates">Check for updates</string>
     <string name="channel_name">Floating button</string>
     <string name="notif_text">Tap the floating button to reconnect %1$s</string>
     <string name="action_flip">Flip now</string>

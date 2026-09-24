@@ -1,1 +1,1 @@
-Adds a permanent "Donate" button to the main screen (it opens a Stripe page in your browser; SocketFlip itself still has no internet permission), and a one-time, dismissible thank-you card after 25 flips.
+Adds a permanent "Donate" button to the main screen (it opens a Stripe page in your browser; SocketFlip itself still has no internet permission), and a one-time, dismissible thank-you card after 25 flips. Also adds a "Check for updates" button that opens the latest release page in your browser.

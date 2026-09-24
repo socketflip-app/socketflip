@@ -14,6 +14,9 @@ object Prefs {
     /** Where the tip button goes: a Stripe pay-what-you-want page, opened in the browser. */
     const val TIP_URL = "https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00"
 
+    /** Latest release page; the browser shows the version and the download. */
+    const val RELEASES_URL = "https://github.com/socketflip-app/socketflip/releases/latest"
+
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
 
