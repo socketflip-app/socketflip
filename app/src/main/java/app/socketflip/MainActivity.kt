@@ -65,6 +65,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
+        if (VpnService.prepare(this) == null) FlipVpnService.check(this)
     }
 
     private fun refresh() {

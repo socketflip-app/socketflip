@@ -70,6 +70,14 @@ browser or file manager ("restricted settings"). To unlock them:
 If there is no three-dot menu, the setting is not restricted on your phone; try
 the switch again.
 
+### My whole phone lost its internet connection
+
+SocketFlip has been set as the **Always-on VPN** with **Block connections without
+VPN**. Its tunnel deliberately carries no traffic, so that setting blocks
+everything. Open **Settings > Network & internet > VPN**, tap the gear next to
+SocketFlip, and turn both switches off. From version 1.1 Android greys these
+switches out for SocketFlip, so update if you can.
+
 ### I tap the button and nothing happens
 
 Work down this list:

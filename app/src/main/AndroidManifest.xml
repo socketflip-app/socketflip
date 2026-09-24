@@ -40,6 +40,12 @@
             <intent-filter>
                 <action android:name="android.net.VpnService" />
             </intent-filter>
+            <!-- The tunnel carries no traffic, so as an Always-on VPN (with "Block
+                 connections without VPN") it would cut the phone off the internet.
+                 This greys the option out in Settings. -->
+            <meta-data
+                android:name="android.net.VpnService.SUPPORTS_ALWAYS_ON"
+                android:value="false" />
         </service>
 
         <service
