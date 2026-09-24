@@ -91,7 +91,9 @@ class FlipVpnService : VpnService() {
             return
         }
         lastFlip = now
-        if (tun != null) down() else up()
+        val wasUp = tun != null
+        if (wasUp) down() else up()
+        if ((tun != null) != wasUp) Prefs.countFlip(this)
     }
 
     private fun up() {

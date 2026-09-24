@@ -3,6 +3,7 @@ package app.socketflip
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.util.TypedValue
+import android.view.View
 import android.view.WindowInsets
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
@@ -28,6 +30,7 @@ class MainActivity : Activity() {
 
     private lateinit var targetButton: Button
     private lateinit var status: TextView
+    private lateinit var tipCard: LinearLayout
     private var askedNotify = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,6 +54,25 @@ class MainActivity : Activity() {
         column.addView(button(getString(R.string.hide_button)) { stop() })
         status = TextView(this).apply { setPadding(0, dp(24), 0, 0) }
         column.addView(status)
+
+        // Shown once, after the app has proved useful; "Not now" hides it for good.
+        tipCard = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(32), 0, 0)
+            addView(TextView(context).apply { text = getString(R.string.tip_prompt) })
+            addView(button(getString(R.string.tip_button)) { openTip() })
+            addView(button(getString(R.string.tip_not_now)) {
+                Prefs.dismissTip(this@MainActivity)
+                refresh()
+            })
+        }
+        column.addView(tipCard)
+
+        column.addView(TextView(this).apply {
+            text = getString(R.string.tip_line)
+            setPadding(0, dp(32), 0, 0)
+        })
+        column.addView(button(getString(R.string.tip_button)) { openTip() })
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             // Android 15+ draws edge to edge; keep content clear of the system bars.
@@ -73,6 +95,18 @@ class MainActivity : Activity() {
         targetButton.text = if (target == null) getString(R.string.no_target)
         else getString(R.string.choose_target, Prefs.label(this, target))
         status.text = getString(if (OverlayService.running) R.string.running else R.string.stopped)
+        val prompt = Prefs.flips(this) >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
+        tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
+    }
+
+    /** Opens the tip page in the browser; SocketFlip itself never touches the network. */
+    private fun openTip() {
+        Prefs.dismissTip(this)
+        try {
+            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Prefs.TIP_URL)))
+        } catch (e: ActivityNotFoundException) {
+            status.text = Prefs.TIP_URL
+        }
     }
 
     /** Walks the user through each missing permission, then shows the button. */

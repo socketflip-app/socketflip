@@ -18,6 +18,10 @@
     <string name="always_on_title">Turn off Always-on VPN for SocketFlip</string>
     <string name="always_on_lockdown">SocketFlip is set as your Always-on VPN with \"Block connections without VPN\". Its tunnel carries no traffic, so this cuts your phone off the internet. Tap here, then SocketFlip\'s gear icon, and turn both switches off.</string>
     <string name="always_on">SocketFlip is set as your Always-on VPN. It is not meant to be, and it stops your other VPN apps working. Tap here, then SocketFlip\'s gear icon, and turn Always-on VPN off.</string>
+    <string name="tip_line">SocketFlip is free and always will be. If it saves you time, a tip keeps it going.</string>
+    <string name="tip_button">Leave a tip</string>
+    <string name="tip_prompt">Enjoying SocketFlip? It is free, open source and ad-free. If it has saved you some time, a small tip really helps.</string>
+    <string name="tip_not_now">Not now</string>
     <string name="channel_name">Floating button</string>
     <string name="notif_text">Tap the floating button to reconnect %1$s</string>
     <string name="action_flip">Flip now</string>

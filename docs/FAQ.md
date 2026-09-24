@@ -179,8 +179,12 @@ them. Use it at your own risk.
 
 ### Is it free?
 
-Yes, and it always will be. If it saves you time, you can leave a tip at
-<https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00>.
+Yes, and it always will be. If it saves you time, tap **Leave a tip** at the
+bottom of SocketFlip's main screen, or go to
+<https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00>. The button just opens that page
+in your browser; SocketFlip itself still has no internet permission. After your
+25th flip SocketFlip shows a one-time thank-you card; **Not now** hides it for
+good.
 
 ### How do I report a problem or suggest something?
 
