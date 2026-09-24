@@ -129,4 +129,12 @@ Google Pay). Thank you.
 
 ## License
 
-MIT, see [LICENSE](LICENSE).
+Copyright (C) 2026 The SocketFlip contributors.
+
+SocketFlip is free software: you can redistribute it and/or modify it under the
+terms of the **GNU General Public License, version 3 or (at your option) any later
+version** ([GPL-3.0-or-later](LICENSE)). In short: you may use, study, change and
+share it, but any version you distribute must also be released as open source
+under the same licence.
+
+Releases up to and including 1.2 were published under the MIT licence.
