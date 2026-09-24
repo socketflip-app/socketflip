@@ -10,6 +10,9 @@
     <string name="need_overlay">Allow \"Display over other apps\" for SocketFlip, then come back and tap again.</string>
     <string name="need_vpn">SocketFlip needs VPN permission. Open SocketFlip and tap Show floating button.</string>
     <string name="target_missing">The target app is not installed.</string>
+    <string name="target_unset">Choose a target app in SocketFlip first.</string>
+    <string name="tunnel_failed">SocketFlip could not start its tunnel. Another VPN app may be set as Always-on.</string>
+    <string name="start_failed">SocketFlip could not start. Open SocketFlip and try again.</string>
     <string name="running">Floating button is on. Drag it anywhere; tap it to reconnect the target app.</string>
     <string name="stopped">Floating button is off.</string>
     <string name="flip_failed">SocketFlip could not reconnect: %1$s</string>
