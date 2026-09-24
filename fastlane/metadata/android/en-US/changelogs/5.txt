@@ -1,0 +1,1 @@
+Clearer feedback: a flip that cannot start the tunnel now says why instead of doing nothing, and no longer triggers the cooldown message. The Quick Settings tile now lights up while the tunnel is up.

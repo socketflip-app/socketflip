@@ -57,7 +57,14 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         running = false
-        button?.let { wm.removeView(it) }
+        // Never crash over the target app: the view may already be detached.
+        button?.let {
+            try {
+                wm.removeView(it)
+            } catch (e: IllegalArgumentException) {
+                // Not attached; nothing to remove.
+            }
+        }
         button = null
         // Leave the phone as we found it.
         if (FlipVpnService.isUp) FlipVpnService.stop(this)

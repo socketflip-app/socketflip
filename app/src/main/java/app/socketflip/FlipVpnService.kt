@@ -4,6 +4,7 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -12,6 +13,7 @@ import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.provider.Settings
+import android.service.quicksettings.TileService
 import android.util.Log
 import android.widget.Toast
 import java.net.Inet4Address
@@ -63,7 +65,9 @@ class FlipVpnService : VpnService() {
             try {
                 context.startService(Intent(context, FlipVpnService::class.java).setAction(action))
             } catch (e: IllegalStateException) {
+                // Background start refused: say so, or a tile tap would do nothing at all.
                 Log.w(TAG, "could not start service for $action", e)
+                Toast.makeText(context, context.getString(R.string.start_failed), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -80,6 +84,7 @@ class FlipVpnService : VpnService() {
             Log.e(TAG, "flip failed", e)
             toast(getString(R.string.flip_failed, e.message ?: e.javaClass.simpleName))
         }
+        refreshTile()
         if (tun == null) stopSelf()
         return START_NOT_STICKY
     }
@@ -90,10 +95,14 @@ class FlipVpnService : VpnService() {
             toast(getString(R.string.cooldown))
             return
         }
-        lastFlip = now
         val wasUp = tun != null
         if (wasUp) down() else up()
-        if ((tun != null) != wasUp) Prefs.countFlip(this)
+        // Only a real state change disconnected the app; a flip that bailed must not
+        // hold the next tap back behind the cooldown.
+        if ((tun != null) != wasUp) {
+            lastFlip = now
+            Prefs.countFlip(this)
+        }
     }
 
     private fun up() {
@@ -101,7 +110,10 @@ class FlipVpnService : VpnService() {
             toast(getString(R.string.need_vpn))
             return
         }
-        val target = Prefs.target(this) ?: return
+        val target = Prefs.target(this) ?: run {
+            toast(getString(R.string.target_unset))
+            return
+        }
         val builder = Builder()
             .setSession(getString(R.string.app_name))
             .addAddress(TUN_ADDRESS, 32)
@@ -118,6 +130,8 @@ class FlipVpnService : VpnService() {
         dnsServers().forEach { builder.addDnsServer(it) }
         tun = builder.establish()
         Log.i(TAG, "tunnel up for $target: ${tun != null}")
+        // null means the system refused, most often because another app holds Always-on.
+        if (tun == null) toast(getString(R.string.tunnel_failed))
     }
 
     private fun down() {
@@ -180,10 +194,20 @@ class FlipVpnService : VpnService() {
         toast(getString(R.string.always_on_title))
     }
 
+    /** Asks the Quick Settings tile to redraw so it shows whether the tunnel is up. */
+    private fun refreshTile() {
+        try {
+            TileService.requestListeningState(this, ComponentName(this, FlipTileService::class.java))
+        } catch (e: Exception) {
+            Log.w(TAG, "tile refresh failed", e)
+        }
+    }
+
     private fun toast(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
 
     override fun onRevoke() {
         down()
+        refreshTile()
         super.onRevoke()
     }
 
