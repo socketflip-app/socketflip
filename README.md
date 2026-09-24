@@ -67,6 +67,7 @@ tap takes it down again (and is also a reconnect).
 
 Full walkthrough, including Play Protect and permission prompts: **[docs/GUIDE.md](docs/GUIDE.md)**.
 Problems and questions: **[docs/FAQ.md](docs/FAQ.md)**.
+What is coming next: **[ROADMAP.md](ROADMAP.md)**.
 
 The short version:
 
