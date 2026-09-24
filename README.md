@@ -7,6 +7,10 @@ app notices straight away and reconnects over your normal network, usually withi
 a second or two. Nothing else on the phone is touched, and no traffic ever passes
 through SocketFlip.
 
+> **Worried by the install warnings?** Read **[Is SocketFlip safe? The warnings,
+> explained](docs/SAFETY.md)**: why Google makes it awkward, what each permission
+> is for, and why it uses a VPN when it is not a VPN.
+
 ## What it is for
 
 - **Unsticking an app** that sits on "Connecting..." or a stale feed after a

@@ -3,6 +3,10 @@
 This walks through installing SocketFlip from GitHub and setting it up. It takes
 about two minutes. SocketFlip needs Android 10 or newer.
 
+You will see some warnings along the way, including one about "monitoring
+network traffic". They are normal for any app installed this way; **[the
+warnings, explained](SAFETY.md)** says why each one appears.
+
 Phone makers word their screens slightly differently. Where a step says
 "something like", look for the nearest match.
 
