@@ -1,0 +1,1 @@
+First release: floating reconnect button, Quick Settings tile, notification action, 10 second cooldown.

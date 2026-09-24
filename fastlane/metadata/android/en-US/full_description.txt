@@ -1,0 +1,18 @@
+SocketFlip puts a small floating button over the app you choose. Tap it and Android closes that app's open network connections, so it reconnects straight away over your normal Wi-Fi or mobile data. Nothing else on the phone is touched.
+
+<b>What it is for</b>
+<ul>
+<li>Unsticking an app that sits on "Connecting..." after a Wi-Fi hand-off or network change, without toggling Wi-Fi or airplane mode for the whole phone.</li>
+<li>Testing reconnect handling in your own app: one tap reproduces a clean server disconnect on a real device.</li>
+<li>Online games that settle a round on the server: a quick reconnect drops you into the next phase instead of waiting out a long animation.</li>
+</ul>
+
+<b>How it works</b>
+SocketFlip uses Android's VPN feature as a switch, not as a VPN. When a VPN covering an app starts or stops, Android closes that app's TCP connections. SocketFlip's tunnel covers only the app you pick and routes a single unused private address, so no traffic ever goes through it and there is no server at the other end. Each tap is exactly one state change, so each tap is exactly one clean reconnect.
+
+It resets TCP connections only. Voice and video calls and other UDP traffic carry on untouched.
+
+<b>Privacy</b>
+SocketFlip has no internet permission, collects nothing and sends nothing. It cannot be set as an Always-on VPN.
+
+Also includes a Quick Settings tile and a notification action, and a 10 second cooldown so a second tap cannot interrupt a reconnect in progress.

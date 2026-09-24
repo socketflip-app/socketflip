@@ -1,0 +1,1 @@
+Floating button that gives one app a clean, instant reconnect. No root.

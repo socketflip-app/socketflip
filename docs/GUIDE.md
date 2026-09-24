@@ -96,6 +96,10 @@ same way as step 2. Your settings are kept. Every release is signed with the sam
 key, so Android accepts it as an update. If Android ever says the app "conflicts
 with an existing package", the file is **not** a genuine release; do not force it.
 
+Tip: to be told about new releases automatically, add SocketFlip to
+[Obtainium](https://github.com/ImranR98/Obtainium) (see the
+[README](../README.md#automatic-updates)).
+
 ## 7. Uninstalling
 
 Long-press the SocketFlip icon, tap **App info**, then **Uninstall**. Nothing is left

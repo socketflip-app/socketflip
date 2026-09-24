@@ -1,0 +1,1 @@
+SocketFlip can no longer be set as the Always-on VPN (on 1.0 that could cut the whole phone off the internet). A warning with a shortcut to the fix appears if it is ever set anyway.

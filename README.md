@@ -81,6 +81,20 @@ There is also a **SocketFlip** Quick Settings tile and a **Flip now** action on 
 notification, which do the same thing. Only one VPN can run on Android at a time,
 so SocketFlip will replace another VPN app's tunnel while its own is up.
 
+## Automatic updates
+
+SocketFlip is not on the Play Store, so it will not update itself. The easiest way
+to stay up to date is **[Obtainium](https://github.com/ImranR98/Obtainium)**, a
+free, open-source app that installs and updates apps straight from their GitHub
+releases:
+
+1. Install Obtainium.
+2. Tap **Add App**, paste `https://github.com/socketflip-app/socketflip`, and tap
+   **Add**.
+
+Obtainium then tells you when a new release is out. Every SocketFlip release is
+signed with the same key, so updates install over the top and keep your settings.
+
 ## Permissions
 
 | Permission | Why |
