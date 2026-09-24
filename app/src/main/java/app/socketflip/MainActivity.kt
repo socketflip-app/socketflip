@@ -118,14 +118,9 @@ class MainActivity : Activity() {
     }
 
     /** What SocketFlip has done so far, in the user's own numbers. */
-    private fun tipDoneText(target: String?, flips: Int): String {
-        val count = if (target == null) resources.getQuantityString(R.plurals.tip_count, flips, flips)
+    private fun tipDoneText(target: String?, flips: Int): String =
+        if (target == null) resources.getQuantityString(R.plurals.tip_count, flips, flips)
         else resources.getQuantityString(R.plurals.tip_count_app, flips, Prefs.label(this, target), flips)
-        // Only Hearthstone has a known payoff per flip; any other app's would be a guess.
-        if (target != Prefs.HEARTHSTONE) return count
-        val minutes = flips * Prefs.SECONDS_SAVED_PER_FLIP / 60
-        return count + " " + resources.getQuantityString(R.plurals.tip_time_saved, minutes, minutes)
-    }
 
     private fun openTip() {
         Prefs.dismissTip(this)
