@@ -11,6 +11,14 @@ through SocketFlip.
 > explained](docs/SAFETY.md)**: why Google makes it awkward, what each permission
 > is for, and why it uses a VPN when it is not a VPN.
 
+## Screenshots
+
+<p>
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="30%" alt="SocketFlip screenshot 1">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width="30%" alt="SocketFlip screenshot 2">
+  <img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="30%" alt="SocketFlip screenshot 3">
+</p>
+
 ## What it is for
 
 - **Unsticking an app** that sits on "Connecting..." or a stale feed after a
