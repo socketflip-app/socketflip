@@ -179,7 +179,7 @@ them. Use it at your own risk.
 
 ### Is it free?
 
-Yes, and it always will be. If it saves you time, tap **Leave a tip** at the
+Yes, and it always will be. If it saves you time, tap **Donate** at the
 bottom of SocketFlip's main screen, or go to
 <https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00>. The button just opens that page
 in your browser; SocketFlip itself still has no internet permission. After your
