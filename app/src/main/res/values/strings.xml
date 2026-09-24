@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SocketFlip</string>
+    <string name="tile_label">SocketFlip</string>
+    <string name="intro">SocketFlip gives one app a clean, instant reconnect. Tap the floating button and the chosen app\'s open connections are closed by Android, so it reconnects straight away. Nothing else on the phone is touched and no traffic ever passes through SocketFlip.</string>
+    <string name="choose_target">Target app: %1$s</string>
+    <string name="no_target">Choose target app</string>
+    <string name="show_button">Show floating button</string>
+    <string name="hide_button">Hide floating button</string>
+    <string name="need_overlay">Allow \"Display over other apps\" for SocketFlip, then come back and tap again.</string>
+    <string name="need_vpn">SocketFlip needs VPN permission. Open SocketFlip and tap Show floating button.</string>
+    <string name="target_missing">The target app is not installed.</string>
+    <string name="running">Floating button is on. Drag it anywhere; tap it to reconnect the target app.</string>
+    <string name="stopped">Floating button is off.</string>
+    <string name="flip_failed">SocketFlip could not reconnect: %1$s</string>
+    <string name="cooldown">Still reconnecting, try again in a few seconds.</string>
+    <string name="channel_name">Floating button</string>
+    <string name="notif_text">Tap the floating button to reconnect %1$s</string>
+    <string name="action_flip">Flip now</string>
+    <string name="action_stop">Stop</string>
+</resources>
