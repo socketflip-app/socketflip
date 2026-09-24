@@ -31,6 +31,7 @@ class MainActivity : Activity() {
     private lateinit var targetButton: Button
     private lateinit var status: TextView
     private lateinit var tipCard: LinearLayout
+    private lateinit var tipDone: TextView
     private var askedNotify = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,6 +60,9 @@ class MainActivity : Activity() {
         tipCard = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(32), 0, 0)
+            // Filled in by refresh(): a concrete number says more than a generic ask.
+            tipDone = TextView(context).apply { setPadding(0, 0, 0, dp(12)) }
+            addView(tipDone)
             addView(TextView(context).apply { text = getString(R.string.tip_prompt) })
             addView(button(getString(R.string.tip_button)) { openTip() })
             addView(button(getString(R.string.tip_not_now)) {
@@ -107,8 +111,20 @@ class MainActivity : Activity() {
         targetButton.text = if (target == null) getString(R.string.no_target)
         else getString(R.string.choose_target, Prefs.label(this, target))
         status.text = getString(if (OverlayService.running) R.string.running else R.string.stopped)
-        val prompt = Prefs.flips(this) >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
+        val flips = Prefs.flips(this)
+        val prompt = flips >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
         tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
+        if (prompt) tipDone.text = tipDoneText(target, flips)
+    }
+
+    /** What SocketFlip has done so far, in the user's own numbers. */
+    private fun tipDoneText(target: String?, flips: Int): String {
+        val count = if (target == null) resources.getQuantityString(R.plurals.tip_count, flips, flips)
+        else resources.getQuantityString(R.plurals.tip_count_app, flips, Prefs.label(this, target), flips)
+        // Only Hearthstone has a known payoff per flip; any other app's would be a guess.
+        if (target != Prefs.HEARTHSTONE) return count
+        val minutes = flips * Prefs.SECONDS_SAVED_PER_FLIP / 60
+        return count + " " + resources.getQuantityString(R.plurals.tip_time_saved, minutes, minutes)
     }
 
     private fun openTip() {

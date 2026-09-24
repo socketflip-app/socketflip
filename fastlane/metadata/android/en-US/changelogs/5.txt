@@ -1,1 +1,1 @@
-Clearer feedback: a flip that cannot start the tunnel now says why instead of doing nothing, and no longer triggers the cooldown message. The Quick Settings tile now lights up while the tunnel is up.
+Clearer feedback: a flip that cannot start the tunnel now says why instead of doing nothing, and no longer triggers the cooldown message. The Quick Settings tile now lights up while the tunnel is up. The one-time thank-you card now shows how many times SocketFlip has reconnected your app.

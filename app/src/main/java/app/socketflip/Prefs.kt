@@ -23,6 +23,15 @@ object Prefs {
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
 
+    /** The one app where a flip's payoff is known: it skips the combat animation. */
+    const val HEARTHSTONE = "com.blizzard.wtcg.hearthstone"
+
+    /**
+     * Combat time one Hearthstone flip saves. Deliberately conservative: a claim the
+     * user can feel is too high would cost more trust than a bigger number gains.
+     */
+    const val SECONDS_SAVED_PER_FLIP = 30
+
     private fun prefs(context: Context) = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
     fun target(context: Context): String? = prefs(context).getString(KEY_TARGET, null)
