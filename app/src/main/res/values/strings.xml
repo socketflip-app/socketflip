@@ -25,6 +25,9 @@
     <string name="tip_button">Donate</string>
     <string name="tip_prompt">Enjoying SocketFlip? It is free, open source and ad-free. If it has saved you some time, a small tip really helps.</string>
     <string name="tip_not_now">Not now</string>
+    <string name="tip_choose">Thank you! How would you like to give?</string>
+    <string name="tip_stripe">Card or Google Pay</string>
+    <string name="tip_kofi">Ko-fi</string>
     <plurals name="tip_count_app">
         <item quantity="one">SocketFlip has reconnected %1$s %2$d time for you.</item>
         <item quantity="other">SocketFlip has reconnected %1$s %2$d times for you.</item>
@@ -37,6 +40,10 @@
     <string name="check_updates">Check for updates</string>
     <string name="licence_line">SocketFlip is free software under the GNU GPL, version 3 or later. You can read, change and share the source.</string>
     <string name="source_code">Source code (GPL-3.0)</string>
+    <string name="replaced_vpn">SocketFlip\'s tunnel has replaced your other VPN. Turn that VPN back on when you are done.</string>
+    <string name="other_vpn_title">Another VPN is on</string>
+    <string name="other_vpn_text">Android can only run one VPN at a time. While SocketFlip\'s tunnel is up (every other tap), your other VPN is switched off, and Android does not turn it back on by itself. Reopen that VPN app afterwards to reconnect it.</string>
+    <string name="other_vpn_ok">Got it</string>
     <string name="channel_name">Floating button</string>
     <string name="notif_text">Tap the floating button to reconnect %1$s</string>
     <string name="action_flip">Flip now</string>

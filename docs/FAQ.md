@@ -98,8 +98,10 @@ Work down this list:
 Android allows only one VPN at a time.
 
 - If your other VPN is running, the first tap on SocketFlip **disconnects it** and
-  SocketFlip's tunnel takes its place. Reconnect your VPN afterwards. SocketFlip is not
-  meant to be used alongside a privacy VPN.
+  SocketFlip's tunnel takes its place. SocketFlip warns you once when you turn the
+  floating button on, and shows a short message whenever a tap replaces another VPN.
+  Reconnect your VPN afterwards. SocketFlip is not meant to be used alongside a
+  privacy VPN.
 - If your other VPN is set to **Always-on VPN** with **Block connections without
   VPN**, Android will not let SocketFlip start at all. You will see "SocketFlip needs VPN
   permission". Turn that setting off in **Settings > Network > VPN** if you want
@@ -156,6 +158,18 @@ TCP connections, which is what most apps use to talk to their servers: app APIs,
 chat and notification links, game servers and ordinary web traffic. It cannot
 reset UDP traffic: voice and video calls, most game voice chat, and QUIC / HTTP/3.
 A call in progress simply carries on.
+
+### Which DNS server does the app use while the tunnel is up?
+
+Your own network's. While the tunnel is up Android asks it which DNS servers the
+target app should use, so SocketFlip passes on the ones your Wi-Fi or mobile network
+already gave you. If the phone changes network while the tunnel is up (leaving
+home Wi-Fi for mobile data, for example), SocketFlip switches to the new network's
+servers straight away.
+
+The exception: if the network offers none that SocketFlip can use, it falls back
+to Cloudflare (`1.1.1.1`) and Quad9 (`9.9.9.9`). That includes mobile networks that
+only hand out IPv6 DNS servers. Nothing changes while the tunnel is down.
 
 ### Does it drain the battery or slow my connection?
 

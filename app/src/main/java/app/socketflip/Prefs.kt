@@ -10,9 +10,13 @@ object Prefs {
     private const val KEY_Y = "y"
     private const val KEY_FLIPS = "flips"
     private const val KEY_TIP_DISMISSED = "tip_dismissed"
+    private const val KEY_OTHER_VPN_WARNED = "other_vpn_warned"
 
     /** Where the tip button goes: a Stripe pay-what-you-want page, opened in the browser. */
     const val TIP_URL = "https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00"
+
+    /** The same support, for people who prefer Ko-fi. */
+    const val KOFI_URL = "https://ko-fi.com/socketflip"
 
     /** Latest release page; the browser shows the version and the download. */
     const val RELEASES_URL = "https://github.com/socketflip-app/socketflip/releases/latest"
@@ -52,4 +56,9 @@ object Prefs {
 
     fun dismissTip(context: Context) =
         prefs(context).edit().putBoolean(KEY_TIP_DISMISSED, true).apply()
+
+    fun otherVpnWarned(context: Context): Boolean = prefs(context).getBoolean(KEY_OTHER_VPN_WARNED, false)
+
+    fun setOtherVpnWarned(context: Context) =
+        prefs(context).edit().putBoolean(KEY_OTHER_VPN_WARNED, true).apply()
 }

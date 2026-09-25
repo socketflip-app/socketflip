@@ -1,0 +1,1 @@
+Changing network while the tunnel is up (for example leaving home Wi-Fi for mobile data) no longer breaks the target app's name lookups: SocketFlip now follows the new network's DNS servers. If another VPN is running, SocketFlip now warns you once before it takes that VPN's place, and says so when a tap replaces it. Donate now lets you choose between card or Google Pay and Ko-fi.
