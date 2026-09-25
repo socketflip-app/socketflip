@@ -122,9 +122,15 @@ class MainActivity : Activity() {
         if (target == null) resources.getQuantityString(R.plurals.tip_count, flips, flips)
         else resources.getQuantityString(R.plurals.tip_count_app, flips, Prefs.label(this, target), flips)
 
+    /** Two ways to give, one tap each: a card or wallet payment on Stripe, or Ko-fi. */
     private fun openTip() {
         Prefs.dismissTip(this)
-        openUrl(Prefs.TIP_URL)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.tip_choose)
+            .setItems(arrayOf(getString(R.string.tip_stripe), getString(R.string.tip_kofi))) { _, which ->
+                openUrl(if (which == 0) Prefs.TIP_URL else Prefs.KOFI_URL)
+            }
+            .show()
     }
 
     /** Opens a page in the browser; SocketFlip itself never touches the network. */
@@ -159,6 +165,20 @@ class MainActivity : Activity() {
         }
         VpnService.prepare(this)?.let {
             startActivityForResult(it, REQ_VPN)
+            return
+        }
+        // Android runs one VPN at a time. Say so once, before a flip mid-game quietly
+        // switches off someone's privacy or work VPN.
+        if (FlipVpnService.otherVpnActive(this) && !Prefs.otherVpnWarned(this)) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.other_vpn_title)
+                .setMessage(R.string.other_vpn_text)
+                .setPositiveButton(R.string.other_vpn_ok) { _, _ ->
+                    Prefs.setOtherVpnWarned(this)
+                    start()
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
             return
         }
         startForegroundService(Intent(this, OverlayService::class.java))

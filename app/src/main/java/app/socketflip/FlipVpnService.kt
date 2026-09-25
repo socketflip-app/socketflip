@@ -9,7 +9,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.LinkProperties
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.VpnService
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import android.os.SystemClock
 import android.provider.Settings
@@ -32,6 +37,8 @@ import java.net.InetAddress
  */
 class FlipVpnService : VpnService() {
 
+    private var netCallback: ConnectivityManager.NetworkCallback? = null
+
     companion object {
         const val ACTION_FLIP = "app.socketflip.action.FLIP"
         const val ACTION_STOP = "app.socketflip.action.STOP"
@@ -53,6 +60,19 @@ class FlipVpnService : VpnService() {
         @Volatile private var lastFlip = 0L
 
         val isUp: Boolean get() = tun != null
+
+        /**
+         * True when a VPN other than SocketFlip is carrying this phone's traffic.
+         * SocketFlip's own tunnel never covers SocketFlip itself, so any VPN seen
+         * here belongs to another app, and bringing ours up will replace it.
+         */
+        fun otherVpnActive(context: Context): Boolean = try {
+            val cm = context.getSystemService(ConnectivityManager::class.java)
+            cm?.activeNetwork?.let { cm.getNetworkCapabilities(it) }
+                ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+        } catch (e: SecurityException) {
+            false
+        }
 
         fun flip(context: Context) = send(context, ACTION_FLIP)
 
@@ -96,7 +116,11 @@ class FlipVpnService : VpnService() {
             return
         }
         val wasUp = tun != null
-        if (wasUp) down() else up()
+        if (wasUp) down() else {
+            val replacing = otherVpnActive(this)
+            up()
+            if (replacing && tun != null) toast(getString(R.string.replaced_vpn))
+        }
         // Only a real state change disconnected the app; a flip that bailed must not
         // hold the next tap back behind the cooldown.
         if ((tun != null) != wasUp) {
@@ -114,6 +138,19 @@ class FlipVpnService : VpnService() {
             toast(getString(R.string.target_unset))
             return
         }
+        val dns = dnsServers()
+        tun = try {
+            establish(target, dns)
+        } catch (e: PackageManager.NameNotFoundException) {
+            toast(getString(R.string.target_missing))
+            return
+        }
+        Log.i(TAG, "tunnel up for $target: ${tun != null}")
+        // null means the system refused, most often because another app holds Always-on.
+        if (tun == null) toast(getString(R.string.tunnel_failed)) else watchNetwork(target, dns)
+    }
+
+    private fun establish(target: String, dns: List<InetAddress>): ParcelFileDescriptor? {
         val builder = Builder()
             .setSession(getString(R.string.app_name))
             .addAddress(TUN_ADDRESS, 32)
@@ -121,20 +158,68 @@ class FlipVpnService : VpnService() {
             .setMtu(1280)
             .setBlocking(false)
             .setMetered(false)
-        try {
-            builder.addAllowedApplication(target)
-        } catch (e: PackageManager.NameNotFoundException) {
-            toast(getString(R.string.target_missing))
-            return
+            .addAllowedApplication(target)
+        dns.forEach { builder.addDnsServer(it) }
+        return builder.establish()
+    }
+
+    /**
+     * The tunnel copies the network's DNS servers when it comes up. If the phone
+     * then moves network (home Wi-Fi to mobile data, say) those servers can be out
+     * of reach, typically a router or LAN resolver, and every lookup the target app
+     * makes fails while the tunnel is up. So while it is up, follow the default
+     * network and rebuild the tunnel with the new servers when they change.
+     *
+     * The network change has already dropped the target app's connections, and its
+     * reconnect cannot succeed until DNS works, so the rebuild costs no extra
+     * disconnect that matters.
+     */
+    private fun watchNetwork(target: String, initial: List<InetAddress>) {
+        unwatchNetwork()
+        var current = initial
+        val cb = object : ConnectivityManager.NetworkCallback() {
+            override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
+                if (tun == null) return
+                val fresh = usableDns(lp.dnsServers).ifEmpty { fallbackDns() }
+                if (fresh == current) return
+                Log.i(TAG, "network DNS changed, rebuilding tunnel")
+                try {
+                    val old = tun
+                    val replacement = establish(target, fresh) ?: return
+                    tun = replacement
+                    current = fresh
+                    try {
+                        old?.close()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "close of old tunnel failed", e)
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "tunnel rebuild failed", e)
+                }
+            }
         }
-        dnsServers().forEach { builder.addDnsServer(it) }
-        tun = builder.establish()
-        Log.i(TAG, "tunnel up for $target: ${tun != null}")
-        // null means the system refused, most often because another app holds Always-on.
-        if (tun == null) toast(getString(R.string.tunnel_failed))
+        try {
+            getSystemService(ConnectivityManager::class.java)
+                ?.registerDefaultNetworkCallback(cb, Handler(Looper.getMainLooper()))
+            netCallback = cb
+        } catch (e: Exception) {
+            Log.w(TAG, "could not watch the network", e)
+        }
+    }
+
+    private fun unwatchNetwork() {
+        netCallback?.let {
+            try {
+                getSystemService(ConnectivityManager::class.java)?.unregisterNetworkCallback(it)
+            } catch (e: Exception) {
+                Log.w(TAG, "unregister failed", e)
+            }
+        }
+        netCallback = null
     }
 
     private fun down() {
+        unwatchNetwork()
         tun?.let {
             try {
                 it.close()
@@ -154,13 +239,17 @@ class FlipVpnService : VpnService() {
     private fun dnsServers(): List<InetAddress> {
         val current = try {
             val cm = getSystemService(ConnectivityManager::class.java)
-            cm?.activeNetwork?.let { cm.getLinkProperties(it)?.dnsServers }.orEmpty()
-                .filter { it is Inet4Address && !it.isLinkLocalAddress }
+            usableDns(cm?.activeNetwork?.let { cm.getLinkProperties(it)?.dnsServers }.orEmpty())
         } catch (e: SecurityException) {
             emptyList()
         }
-        return current.ifEmpty { FALLBACK_DNS.map { InetAddress.getByName(it) } }
+        return current.ifEmpty { fallbackDns() }
     }
+
+    private fun usableDns(servers: List<InetAddress>) =
+        servers.filter { it is Inet4Address && !it.isLinkLocalAddress }
+
+    private fun fallbackDns() = FALLBACK_DNS.map { InetAddress.getByName(it) }
 
     /**
      * SocketFlip's tunnel carries no traffic, so as the Always-on VPN with "Block
