@@ -10,6 +10,7 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.os.SystemClock
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.View
@@ -26,6 +27,9 @@ class MainActivity : Activity() {
     companion object {
         private const val REQ_VPN = 1
         private const val REQ_NOTIFY = 2
+        // Android closes its VPN consent screen unseen when another app holds
+        // Always-on VPN; a "cancel" this fast means nobody saw a dialog.
+        private const val UNSEEN_CANCEL_MS = 500L
     }
 
     private lateinit var targetButton: Button
@@ -33,6 +37,7 @@ class MainActivity : Activity() {
     private lateinit var tipCard: LinearLayout
     private lateinit var tipDone: TextView
     private var askedNotify = false
+    private var consentAskedAt = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -55,6 +60,9 @@ class MainActivity : Activity() {
         column.addView(button(getString(R.string.hide_button)) { stop() })
         status = TextView(this).apply { setPadding(0, dp(24), 0, 0) }
         column.addView(status)
+        column.addView(button(getString(R.string.check_setup)) {
+            startActivity(Intent(this, CheckActivity::class.java))
+        })
 
         // Shown once, after the app has proved useful; "Not now" hides it for good.
         tipCard = LinearLayout(this).apply {
@@ -93,8 +101,17 @@ class MainActivity : Activity() {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             // Android 15+ draws edge to edge; keep content clear of the system bars.
             setOnApplyWindowInsetsListener { v, insets ->
-                val bars = insets.getInsets(WindowInsets.Type.systemBars())
-                v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                // getInsets() is Android 11+; the older getters still work on Android 10.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    val bars = insets.getInsets(WindowInsets.Type.systemBars())
+                    v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
+                } else {
+                    @Suppress("DEPRECATION")
+                    v.setPadding(
+                        insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
+                        insets.systemWindowInsetRight, insets.systemWindowInsetBottom
+                    )
+                }
                 insets
             }
         })
@@ -103,7 +120,9 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         refresh()
-        if (VpnService.prepare(this) == null) FlipVpnService.check(this)
+        // prepare() is not a read-only question: once SocketFlip has permission it takes
+        // the VPN slot from any other VPN app. So never call it while another VPN is on.
+        if (!FlipVpnService.otherVpnActive(this) && VpnService.prepare(this) == null) FlipVpnService.check(this)
     }
 
     private fun refresh() {
@@ -163,12 +182,9 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFY)
             return
         }
-        VpnService.prepare(this)?.let {
-            startActivityForResult(it, REQ_VPN)
-            return
-        }
-        // Android runs one VPN at a time. Say so once, before a flip mid-game quietly
-        // switches off someone's privacy or work VPN.
+        // Android runs one VPN at a time. Say so once, before anything switches off
+        // someone's privacy or work VPN. This must come before prepare(), which already
+        // takes the VPN slot away from the other app.
         if (FlipVpnService.otherVpnActive(this) && !Prefs.otherVpnWarned(this)) {
             AlertDialog.Builder(this)
                 .setTitle(R.string.other_vpn_title)
@@ -178,6 +194,27 @@ class MainActivity : Activity() {
                     start()
                 }
                 .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            return
+        }
+        VpnService.prepare(this)?.let {
+            consentAskedAt = SystemClock.elapsedRealtime()
+            try {
+                startActivityForResult(it, REQ_VPN)
+            } catch (e: ActivityNotFoundException) {
+                alwaysOnDialog()
+            }
+            return
+        }
+        // Ask once, and only on phones whose makers are known to close background apps.
+        if (Battery.aggressiveMaker && !Battery.unrestricted(this) && !Prefs.batteryAsked(this)) {
+            Prefs.setBatteryAsked(this)
+            AlertDialog.Builder(this)
+                .setTitle(R.string.battery_title)
+                .setMessage(R.string.battery_text)
+                .setPositiveButton(R.string.battery_allow) { _, _ -> Battery.request(this) }
+                .setNegativeButton(R.string.tip_not_now, null)
+                .setOnDismissListener { start() }
                 .show()
             return
         }
@@ -213,7 +250,34 @@ class MainActivity : Activity() {
     @Deprecated("Platform Activity API; no AndroidX in this app")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQ_VPN && resultCode == RESULT_OK) start()
+        if (requestCode != REQ_VPN) return
+        when {
+            resultCode == RESULT_OK -> start()
+            SystemClock.elapsedRealtime() - consentAskedAt < UNSEEN_CANCEL_MS -> alwaysOnDialog()
+            else -> AlertDialog.Builder(this)
+                .setTitle(R.string.consent_cancelled_title)
+                .setMessage(R.string.consent_cancelled_text)
+                .setPositiveButton(R.string.consent_try_again) { _, _ -> start() }
+                .setNeutralButton(R.string.consent_why_safe) { _, _ -> openUrl(Prefs.SAFETY_URL) }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
+    }
+
+    /** The consent screen closed before anyone could see it: another app holds Always-on VPN. */
+    private fun alwaysOnDialog() {
+        AlertDialog.Builder(this)
+            .setTitle(R.string.other_always_on_title)
+            .setMessage(R.string.other_always_on_text)
+            .setPositiveButton(R.string.open_vpn_settings) { _, _ ->
+                try {
+                    startActivity(Intent(Settings.ACTION_VPN_SETTINGS))
+                } catch (e: ActivityNotFoundException) {
+                    // No VPN settings screen; the message already says where to look.
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

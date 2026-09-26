@@ -11,8 +11,8 @@
 
 Google Play only allows apps to use Android's VPN feature when the app is a VPN
 service or one of a short list of approved kinds of app. SocketFlip uses the VPN
-feature for a side effect and never carries traffic, so it would almost certainly
-be rejected. It is published here instead, with the full source.
+feature for a side effect and never carries traffic, so it would probably be
+turned down. It is published here instead, with the full source.
 
 ### Play Protect says "Unsafe app blocked" or "App scan recommended"
 
@@ -25,11 +25,11 @@ That is Play Protect's normal reaction to an app it has not seen before. Tap
 Each release lists two fingerprints:
 
 - the **SHA-256 of the APK file**, which you can check on a computer with
-  `sha256sum socketflip-1.0.apk` (Linux, macOS) or
-  `Get-FileHash socketflip-1.0.apk` (Windows PowerShell);
+  `sha256sum socketflip-<version>.apk` (Linux, macOS) or
+  `Get-FileHash socketflip-<version>.apk` (Windows PowerShell);
 - the **signing certificate SHA-256**, which stays the same for every release:
   `23c4cf27a70b2b804f58726183bd771e6fd1844853e9362b4c43a4e92263b179`.
-  On a computer: `apksigner verify --print-certs socketflip-1.0.apk`. On the phone,
+  On a computer: `apksigner verify --print-certs socketflip-<version>.apk`. On the phone,
   the open-source app **AppVerifier** can check it before you install.
 
 ### "App not installed" or "conflicts with an existing package"
@@ -44,16 +44,18 @@ The download was cut short, or your Android is older than 10. Download it again.
 
 ### Will Android stop me installing apps from outside the Play Store?
 
-Google has announced that certified Android phones will gradually only install
-apps from developers registered with Google, starting in a few countries in 2026
-and spreading after that. If your phone refuses to install SocketFlip with a message
-about an unverified developer, please open an issue here and say which country
-you are in.
+Not yet. Google's 2026 developer registration rules only apply to a few
+participating app stores, so nothing changes in 2026 for SocketFlip installed from
+this page. Google plans to extend them to all certified Android phones in 2027,
+and apps from unregistered developers would then need extra steps to install.
+If your phone refuses to install SocketFlip with a message about an unverified
+developer, please open an issue here and say which country you are in.
 
 ### Does it work on iPhone?
 
-No. iOS does not allow floating buttons over other apps, or a per-app VPN
-outside company-managed devices.
+No, and it cannot be made to. iOS does not allow floating buttons over other
+apps, or a per-app VPN outside company-managed devices. On iPhone, switching to
+another app and back reportedly already gives some games a reconnect.
 
 ## It is not working
 
@@ -80,7 +82,9 @@ switches out for SocketFlip, so update if you can.
 
 ### I tap the button and nothing happens
 
-Work down this list:
+Open SocketFlip and tap **Check setup** first: it shows every permission and
+setting SocketFlip needs, with a **Fix** button next to anything wrong. If that is
+all green, work down this list:
 
 1. **Wrong target app.** Open SocketFlip and check the **Target app** line.
 2. **Tapped too soon.** Taps less than 10 seconds apart are ignored. A short
@@ -91,35 +95,47 @@ Work down this list:
 4. **It did work, very quickly.** Many apps reconnect so fast there is nothing to
    see. Watch for the key icon appearing or disappearing in the status bar: if it
    changed, SocketFlip did its part.
-5. **Another VPN is locked on.** See the next question.
+5. **Another VPN app is set as Always-on.** See
+   [SocketFlip says another VPN app is set as Always-on](#socketflip-says-another-vpn-app-is-set-as-always-on).
 
 ### I use another VPN app
 
 Android allows only one VPN at a time.
 
-- If your other VPN is running, the first tap on SocketFlip **disconnects it** and
-  SocketFlip's tunnel takes its place. SocketFlip warns you once when you turn the
-  floating button on, and shows a short message whenever a tap replaces another VPN.
-  Reconnect your VPN afterwards. SocketFlip is not meant to be used alongside a
-  privacy VPN.
-- If your other VPN is set to **Always-on VPN** with **Block connections without
-  VPN**, Android will not let SocketFlip start at all. You will see "SocketFlip needs VPN
-  permission". Turn that setting off in **Settings > Network > VPN** if you want
-  to use SocketFlip.
+- Just opening SocketFlip leaves your other VPN alone.
+- If your other VPN is running, turning the floating button on (or the first tap)
+  **disconnects it** and SocketFlip's tunnel takes its place. SocketFlip warns you
+  once before that happens, and shows a short message whenever a tap replaces
+  another VPN. Reconnect your VPN afterwards. SocketFlip is not meant to be used
+  alongside a privacy VPN.
+- If your other VPN app is set as **Always-on VPN**, Android will not let SocketFlip
+  start at all. See the next question.
+
+### SocketFlip says another VPN app is set as Always-on
+
+Android will not let any app replace an Always-on VPN, so it closes SocketFlip's
+VPN request before you even see it. Ad blockers and privacy apps that work as a
+VPN (AdGuard, Blokada, RethinkDNS, NetGuard, Proton, Mullvad and others) often ask
+to be Always-on, and work phones may set it too. To use SocketFlip, open
+**Settings > Network & internet > VPN**, tap the gear next to that app and turn
+**Always-on VPN** off. You can turn it back on when you are done.
 
 ### The app got stuck on its reconnecting screen
 
 Usually a second disconnect arrived while the app was still reconnecting. Tap the
 app's own reconnect button, or wait for it to retry. The 10-second cooldown exists
 to prevent this; if it keeps happening with one particular app, please open an
-issue saying which app.
+issue saying what kind of app it is (game, chat, browser...).
 
 ### The floating button disappeared
 
 - After a **restart** of the phone: SocketFlip does not start itself. Open SocketFlip and
   tap **Show floating button**.
-- If a **battery saver** closed it: in **Settings > Apps > SocketFlip > Battery**,
-  choose **Unrestricted**.
+- If a **battery saver** closed it: open SocketFlip, tap **Check setup**, and tap
+  **Fix** next to Battery optimisation. Or in **Settings > Apps > SocketFlip >
+  Battery**, choose **Unrestricted**. Samsung, Xiaomi, OnePlus and some other
+  makers have extra settings of their own; [dontkillmyapp.com](https://dontkillmyapp.com)
+  has step-by-step instructions for each brand.
 
 ### The button is in the way
 
@@ -132,8 +148,11 @@ it, and so does **Stop** on the notification.
 
 ### "SocketFlip could not reconnect: ..."
 
-Something unexpected went wrong. Please open an issue with the exact message and
-your phone model and Android version.
+Something unexpected went wrong. Please open an issue with the exact message.
+**Check setup > Copy report** puts your phone model, Android version and every
+setting SocketFlip depends on onto the clipboard, ready to paste into the issue.
+It does not include the name of the app you chose, and there is no need to name
+it in the issue.
 
 ## How it works, privacy and safety
 
@@ -185,9 +204,16 @@ the connection, and a short stall is never noticed.
 
 ### Is it safe to use in online games?
 
-SocketFlip is not affiliated with any game or app developer. Forcing reconnects may be
-against a game's terms of service, and what a developer does about that is up to
-them. Use it at your own risk.
+SocketFlip is not affiliated with any game or app developer. Many online games'
+terms forbid tools that give a player an advantage, and a game's developer can see
+every reconnect on its servers. We know of no one penalised for reconnecting, but
+that can change without notice. Use it at your own risk, on an account you would
+not mind losing, and never in tournaments.
+
+### Will SocketFlip ever reconnect automatically?
+
+No, by design. Every reconnect is one tap by you, one per use. SocketFlip has no
+timer or "every round" mode and will not get one.
 
 ## Other questions
 
@@ -203,4 +229,6 @@ good.
 ### How do I report a problem or suggest something?
 
 Open an issue at <https://github.com/socketflip-app/socketflip/issues> with your phone
-model, Android version, the target app and what happened.
+model, Android version, what kind of app you use it with (game, chat, browser...)
+and what happened. **Check setup > Copy report** gives you most of that in one
+paste. There is no need to name the app.

@@ -1,0 +1,1 @@
+New Check setup screen: every permission and setting SocketFlip needs, marked OK or not, with a Fix button for each and a Copy report button for bug reports. On phones known to close background apps (Samsung, Xiaomi, OnePlus and others), SocketFlip now offers once to be allowed to run in the background, so the floating button stops disappearing.

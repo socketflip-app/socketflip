@@ -1,0 +1,30 @@
+name: Bug report
+description: Something in SocketFlip does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. There is no need to name the app you use SocketFlip with;
+        "a game", "a chat app" or "a browser" is plenty.
+  - type: textarea
+    id: report
+    attributes:
+      label: Setup report
+      description: In SocketFlip, tap Check setup, then Copy report, and paste it here. It lists your phone model, Android version and settings, never your apps.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: kind
+    attributes:
+      label: What kind of app do you use it with?
+      placeholder: game, chat app, browser...
+    validations:
+      required: false
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true

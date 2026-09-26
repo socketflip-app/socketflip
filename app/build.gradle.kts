@@ -11,8 +11,8 @@ android {
         applicationId = "app.socketflip"
         minSdk = 29
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.5"
+        versionCode = 7
+        versionName = "1.6"
     }
 
     // Release signing comes from ~/.gradle/gradle.properties (never the repo):
@@ -43,5 +43,17 @@ android {
     }
     kotlinOptions {
         jvmTarget = "17"
+    }
+
+    // Fail the release build on any call above minSdk, so nothing Android 11 only reaches Android 10.
+    lint {
+        fatal += "NewApi"
+        checkReleaseBuilds = true
+    }
+
+    // Leave out AGP's encrypted dependency blob so the APK rebuilds byte for byte.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
     }
 }

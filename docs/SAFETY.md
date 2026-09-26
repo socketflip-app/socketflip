@@ -37,7 +37,7 @@ SocketFlip has been found to be harmful.
 **Why not just put it on the Play Store?** Google only lets an app use Android's
 VPN feature if the app *is* a VPN service or one of a short list of approved
 types. SocketFlip uses the VPN feature for something else (explained
-[below](#why-a-vpn)), so it would be turned down. Publishing it here, with the
+[below](#why-a-vpn)), so it would probably be turned down. Publishing it here, with the
 full source, is the honest alternative.
 
 ## Every warning, in order
@@ -50,12 +50,14 @@ full source, is the honest alternative.
 | First run | "Display over other apps" settings page | SocketFlip asks to draw its floating button. See [below](#display-over-other-apps). | Turn SocketFlip **on**, go back |
 | First run, some phones | That switch is greyed out ("restricted setting") | Android locks this for apps installed from a browser. | App info, **three-dot menu**, **Allow restricted settings**, then turn it on |
 | First run | "Allow SocketFlip to send you notifications?" | Keeps the button alive and gives you Flip now and Stop buttons. | **Allow** |
+| First run, only if another VPN is on | SocketFlip's own "Another VPN is on" note | Android runs one VPN at a time, so SocketFlip's will switch the other one off. | **Got it**, or **Cancel** to keep your VPN |
 | First run | "Connection request: SocketFlip wants to set up a VPN connection that allows it to monitor network traffic. Only accept if you trust the source." | The scary one. Android shows these exact words for **every** VPN app. See [Why a VPN](#why-a-vpn). | **OK** |
+| First run, some phones (Samsung, Xiaomi, OnePlus and similar) | SocketFlip's "Keep the button on screen?", then Android's "Let app always run in background?" | These makers close background apps to save battery, which makes the button vanish. | **Allow**, then **Allow** |
 | After a tap | A key icon in the status bar | SocketFlip's (empty) tunnel is on. It goes away on the next tap. | Nothing |
 
 ## Why each permission
 
-SocketFlip asks for five things. Here is every one, and nothing else:
+Here is every permission SocketFlip asks for, and nothing else:
 
 ### Display over other apps
 To draw the round button on top of the app you are using. Android treats this as
@@ -78,6 +80,13 @@ Lets SocketFlip read which DNS servers your Wi-Fi or mobile network uses, so it
 can pass them on to the app you picked (otherwise that app could not look up
 addresses while the tunnel is on). It can only *read* this, not change it, and it
 does not show a prompt.
+
+### Ask to ignore battery optimisations
+Lets SocketFlip show Android's own "let this app run in the background?" prompt.
+Some phone makers close apps in the background to save battery, which makes the
+floating button disappear. SocketFlip only asks once, on phones known to do this,
+and from the **Check setup** screen. You can say no. Allowing it does not make
+SocketFlip do anything more: between taps it only keeps the button on screen.
 
 ### VPN (the connection request)
 Explained in full in the next section.
@@ -102,7 +111,7 @@ There is one thing Android always does, though: **whenever a VPN covering an app
 starts or stops, Android closes that app's open connections**, so they can be
 reopened through the new route. SocketFlip uses exactly that, and nothing more:
 
-- Its "VPN" covers **only the one app you choose**. Every other app is untouched.
+- Its "VPN" covers **only the apps you pick**. Every other app is untouched.
 - It routes **one private address that nothing uses** (`10.111.222.2`). None of
   your traffic, and none of the chosen app's real traffic, goes into it. Everything
   still goes out over your Wi-Fi or mobile data as normal.
@@ -125,8 +134,8 @@ tap will switch it off. See the [FAQ](FAQ.md#i-use-another-vpn-app).
 You do not have to take this page's word for any of it:
 
 - **The code is public.** Everything the app does is in
-  [app/src/main/java/app/socketflip](../app/src/main/java/app/socketflip), five
-  short files. The permissions are listed in
+  [app/src/main/java/app/socketflip](../app/src/main/java/app/socketflip): a small
+  amount of plain Kotlin with no third-party libraries. The permissions are listed in
   [AndroidManifest.xml](../app/src/main/AndroidManifest.xml).
 - **See its permissions on your phone.** Settings, Apps, SocketFlip,
   Permissions (and "All permissions" or "App details" where your phone offers
@@ -136,7 +145,8 @@ You do not have to take this page's word for any of it:
   the signing certificate; see the
   [FAQ](FAQ.md#how-do-i-check-the-apk-is-genuine).
 - **Build it yourself.** The [README](../README.md#building) shows how to build
-  the exact same app from the source.
+  it from the same code. Your build is signed with your own key, so it will not
+  be byte for byte the same file as a release.
 
 If something here does not match what you see, please
 [open an issue](https://github.com/socketflip-app/socketflip/issues).

@@ -66,10 +66,15 @@ class FlipVpnService : VpnService() {
          * SocketFlip's own tunnel never covers SocketFlip itself, so any VPN seen
          * here belongs to another app, and bringing ours up will replace it.
          */
+        // Looks at every network, not just activeNetwork: a per-app VPN (one that only covers a
+        // game, say) is not SocketFlip's own default network, so activeNetwork never shows it.
+        // While our tunnel is up, the VPN that is there is ours.
         fun otherVpnActive(context: Context): Boolean = try {
             val cm = context.getSystemService(ConnectivityManager::class.java)
-            cm?.activeNetwork?.let { cm.getNetworkCapabilities(it) }
-                ?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+            @Suppress("DEPRECATION")
+            tun == null && cm != null && cm.allNetworks.any { n ->
+                cm.getNetworkCapabilities(n)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true
+            }
         } catch (e: SecurityException) {
             false
         }
@@ -97,7 +102,7 @@ class FlipVpnService : VpnService() {
         try {
             when (intent?.action) {
                 ACTION_FLIP -> flipOnce()
-                ACTION_STOP -> down()
+                ACTION_STOP -> stopTunnel()
             }
             warnIfAlwaysOn()
         } catch (e: Exception) {
@@ -105,7 +110,9 @@ class FlipVpnService : VpnService() {
             toast(getString(R.string.flip_failed, e.message ?: e.javaClass.simpleName))
         }
         refreshTile()
-        if (tun == null) stopSelf()
+        // Only stop if no newer command is queued: a FLIP right behind this one may
+        // have just brought the tunnel up, and stopping would take it down again.
+        if (tun == null) stopSelfResult(startId)
         return START_NOT_STICKY
     }
 
@@ -129,13 +136,34 @@ class FlipVpnService : VpnService() {
         }
     }
 
+    /**
+     * Taking the tunnel down closes the target's connections just like a flip, so it
+     * starts the cooldown too: the next tap then waits instead of hitting the target
+     * a second time while it is still reconnecting.
+     */
+    private fun stopTunnel() {
+        if (tun == null) return
+        down()
+        lastFlip = SystemClock.elapsedRealtime()
+    }
+
     private fun up() {
-        if (prepare(this) != null) {
-            toast(getString(R.string.need_vpn))
-            return
-        }
+        // Check the target first: prepare() below is not a harmless question, it takes
+        // the VPN slot from any other VPN app, so never call it for a flip that cannot work.
         val target = Prefs.target(this) ?: run {
             toast(getString(R.string.target_unset))
+            return
+        }
+        try {
+            packageManager.getApplicationInfo(target, 0)
+        } catch (e: PackageManager.NameNotFoundException) {
+            toast(getString(R.string.target_missing))
+            return
+        }
+        if (prepare(this) != null) {
+            // Permission was there before, so something took it: almost always another
+            // VPN app set as Always-on, which Android will not let SocketFlip replace.
+            toast(getString(if (Prefs.flips(this) > 0) R.string.vpn_taken else R.string.need_vpn))
             return
         }
         val dns = dnsServers()

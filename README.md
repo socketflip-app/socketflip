@@ -7,6 +7,19 @@ app notices straight away and reconnects over your normal network, usually withi
 a second or two. Nothing else on the phone is touched, and no traffic ever passes
 through SocketFlip.
 
+**[Download the latest APK](https://github.com/socketflip-app/socketflip/releases/latest)**:
+Android 10 or newer, a small download (under 150 KB), no internet permission. New to installing APKs?
+Follow the [2-minute guide](docs/GUIDE.md).
+
+## The short version
+
+1. [Download the APK](https://github.com/socketflip-app/socketflip/releases/latest),
+   install it and open SocketFlip.
+2. Tap **Target app** and choose the app.
+3. Tap **Show floating button** and grant what it asks for: display over other
+   apps, notifications, and the VPN connection request.
+4. Drag the button wherever it is out of the way. Tap it to reconnect.
+
 > **Worried by the install warnings?** Read **[Is SocketFlip safe? The warnings,
 > explained](docs/SAFETY.md)**: why Google makes it awkward, what each permission
 > is for, and why it uses a VPN when it is not a VPN.
@@ -77,15 +90,6 @@ Full walkthrough, including Play Protect and permission prompts: **[docs/GUIDE.m
 Problems and questions: **[docs/FAQ.md](docs/FAQ.md)**.
 What is coming next: **[ROADMAP.md](ROADMAP.md)**.
 
-The short version:
-
-
-1. Install the APK and open SocketFlip.
-2. Tap **Target app** and choose the app.
-3. Tap **Show floating button** and grant what it asks for: display over other
-   apps, notifications, and the VPN connection request.
-4. Drag the button wherever it is out of the way. Tap it to reconnect.
-
 There is also a **SocketFlip** Quick Settings tile and a **Flip now** action on the
 notification, which do the same thing. Only one VPN can run on Android at a time,
 so SocketFlip will replace another VPN app's tunnel while its own is up.
@@ -112,6 +116,7 @@ signed with the same key, so updates install over the top and keep your settings
 | Display over other apps | To draw the floating button |
 | Foreground service, notifications | To keep the button alive over the other app |
 | Access network state | To hand the target app your current DNS servers |
+| Ask to ignore battery optimisations | To offer Android's own "run in the background" prompt, so the button is not closed |
 
 SocketFlip has no `INTERNET` permission, collects nothing and sends nothing.
 

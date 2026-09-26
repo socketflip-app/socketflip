@@ -14,13 +14,10 @@ ship. Ideas and requests are welcome in the
 - [x] Keep name lookups working when the phone changes network while the tunnel
       is up (for example leaving Wi-Fi for mobile data) (1.5)
 - [x] Warn before SocketFlip's tunnel replaces another VPN app (1.5)
-
-## Next: reliability
-
-- [ ] Self-check screen: every permission and setting SocketFlip needs, with a
-      button to fix each one and a "copy report" button for bug reports
-- [ ] Ask to be exempted from battery optimisation on phones known to close
-      background apps (Samsung, Xiaomi, OnePlus and others)
+- [x] Self-check screen: every permission and setting SocketFlip needs, with a
+      button to fix each one and a "copy report" button for bug reports (1.6)
+- [x] Ask to be exempted from battery optimisation on phones known to close
+      background apps (Samsung, Xiaomi, OnePlus and others) (1.6)
 
 ## Then: settings and looks
 
@@ -52,8 +49,32 @@ ship. Ideas and requests are welcome in the
 - [ ] Option to mirror the arrow so it turns the other way
 - [ ] Optional emergency restart: a red ! during the cooldown restarts a stuck app,
       after asking
-- [ ] Translations (help welcome: the text is all in one strings file)
-- [ ] Export and import settings, so a reinstall or a new phone keeps your setup
+- [ ] Home screen shortcut that shows the button and opens your app in one tap
+- [ ] An easier first run: numbered steps that carry on by themselves, and a plain
+      explanation before Android's VPN warning
+- [ ] App picker with icons, search, and games listed first
+- [ ] Errors leave a notification that opens the setup check, which can open a
+      prefilled bug report
+- [ ] Adaptive launcher icon with a themed (monochrome) version
+- [ ] Send SocketFlip to a friend: the app itself, phone to phone, or the link
+- [ ] Your numbers: reconnects in total and this week, and restarts used, with a
+      Share button (counted on the phone only)
+- [ ] A note in the app when your copy is more than 30 days old
+- [ ] A quicker emergency restart question: two big buttons, Restart and Cancel
+- [ ] Clear "not yet" feedback for a tap the cooldown ignores
+- [ ] Settings kept in your phone's own backup, so a reinstall or a new phone keeps
+      your setup
+- [ ] Setup check row for the Xiaomi, Redmi and POCO permission emergency restart needs
+- [ ] Accessibility: TalkBack names and values for every setting and for the
+      button's state, and text that is easier to read in light mode
+- [ ] Settings lead with the cooldown; resetting the look can be undone
+- [ ] A 48 dp touch area around small buttons, and layouts that fit large text,
+      tablets and landscape
+- [ ] Ready for translators: every piece of text in one file, and setup check
+      reports that stay in English
+- [ ] Built with current Android tools, targets Android 16
+- [ ] Translations, first German, Brazilian Portuguese, Spanish, French and
+      Russian (help welcome: the text is all in one strings file)
 - [ ] Reproducible builds, so anyone can check the APK matches the source
 
 ## Not planned

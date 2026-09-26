@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.os.Build
@@ -18,6 +19,7 @@ import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.ImageView
+import android.widget.Toast
 import kotlin.math.hypot
 
 /** Keeps a small draggable button on screen; a tap flips the tunnel once. */
@@ -39,6 +41,7 @@ class OverlayService : Service() {
 
     private lateinit var wm: WindowManager
     private var button: ImageView? = null
+    private var params: WindowManager.LayoutParams? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -159,12 +162,51 @@ class OverlayService : Service() {
                 else -> false
             }
         }
-        wm.addView(view, lp)
+        keepOnScreen(lp)
+        try {
+            wm.addView(view, lp)
+        } catch (e: RuntimeException) {
+            // The system refused the overlay (permission just revoked, a managed phone,
+            // an OEM pop-up switch). Explain instead of crashing.
+            Toast.makeText(this, R.string.need_overlay, Toast.LENGTH_LONG).show()
+            running = false
+            stopSelf()
+            return
+        }
         button = view
+        params = lp
+    }
+
+    /**
+     * Keeps the whole button on screen. The saved position is wherever it was last
+     * dragged, so a button dragged low in portrait would sit below the bottom of the
+     * screen in a landscape game, running but invisible. Also re-checked whenever the
+     * screen rotates.
+     */
+    private fun keepOnScreen(lp: WindowManager.LayoutParams) {
+        val screen = resources.displayMetrics
+        lp.x = lp.x.coerceIn(0, maxOf(0, screen.widthPixels - lp.width))
+        lp.y = lp.y.coerceIn(0, maxOf(0, screen.heightPixels - lp.height))
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        val view = button ?: return
+        val lp = params ?: return
+        keepOnScreen(lp)
+        try {
+            wm.updateViewLayout(view, lp)
+        } catch (e: IllegalArgumentException) {
+            // Not attached any more.
+        }
     }
 
     private fun tapped(view: View, background: GradientDrawable) {
-        view.performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        // CONFIRM is Android 11+; Android 10 gets the plain tap feedback.
+        view.performHapticFeedback(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM
+            else HapticFeedbackConstants.VIRTUAL_KEY
+        )
         background.setColor(FLASH_COLOR)
         view.postDelayed({ background.setColor(IDLE_COLOR) }, FLASH_MS)
         FlipVpnService.flip(this)

@@ -11,6 +11,7 @@ object Prefs {
     private const val KEY_FLIPS = "flips"
     private const val KEY_TIP_DISMISSED = "tip_dismissed"
     private const val KEY_OTHER_VPN_WARNED = "other_vpn_warned"
+    private const val KEY_BATTERY_ASKED = "battery_asked"
 
     /** Where the tip button goes: a Stripe pay-what-you-want page, opened in the browser. */
     const val TIP_URL = "https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00"
@@ -23,6 +24,9 @@ object Prefs {
 
     /** Source code, as the GPL expects users to be able to find it. */
     const val SOURCE_URL = "https://github.com/socketflip-app/socketflip"
+
+    /** The page that explains, for the wary, what the VPN permission is and is not used for. */
+    const val SAFETY_URL = "$SOURCE_URL/blob/main/docs/SAFETY.md"
 
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
@@ -61,4 +65,9 @@ object Prefs {
 
     fun setOtherVpnWarned(context: Context) =
         prefs(context).edit().putBoolean(KEY_OTHER_VPN_WARNED, true).apply()
+
+    fun batteryAsked(context: Context): Boolean = prefs(context).getBoolean(KEY_BATTERY_ASKED, false)
+
+    fun setBatteryAsked(context: Context) =
+        prefs(context).edit().putBoolean(KEY_BATTERY_ASKED, true).apply()
 }

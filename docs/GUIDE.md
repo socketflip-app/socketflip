@@ -13,7 +13,7 @@ Phone makers word their screens slightly differently. Where a step says
 ## 1. Download
 
 1. On your phone, open <https://github.com/socketflip-app/socketflip/releases/latest>.
-2. Under **Assets**, tap the `.apk` file (for example `socketflip-1.0.apk`).
+2. Under **Assets**, tap the `.apk` file (named `socketflip-<version>.apk`, for example `socketflip-1.6.apk`).
 3. If your browser warns that "this type of file can harm your device", tap
    **Download anyway**. Every APK download gets this warning.
 
@@ -50,7 +50,8 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 1. Open **SocketFlip**.
 2. Tap **Choose target app** and pick the app you want to reconnect.
 3. Tap **Show floating button**. SocketFlip now asks for three things, one at a
-   time. After each one, come back to SocketFlip and tap **Show floating button**
+   time (four on Samsung, Xiaomi, OnePlus and similar phones, and one more note if
+   another VPN is on). After each one, come back to SocketFlip and tap **Show floating button**
    again until the button appears.
 
    - **Display over other apps**: Android opens a settings page. Turn SocketFlip
@@ -63,7 +64,15 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
      still works, you just do not see the notification.
    - **Connection request** ("SocketFlip wants to set up a VPN connection"): tap
      **OK**. See [Why does it need a VPN?](FAQ.md#why-does-it-need-a-vpn) for
-     what this does and does not mean.
+     what this does and does not mean. If SocketFlip instead says another VPN app
+     is set as Always-on, see
+     [that FAQ entry](FAQ.md#socketflip-says-another-vpn-app-is-set-as-always-on).
+   - **Only on Samsung, Xiaomi, OnePlus and similar phones**: "Keep the button on
+     screen?", then Android's own "Let app always run in background?". Tap
+     **Allow** both times. These phones close background apps to save battery,
+     which would make the button disappear.
+   - **Only if another VPN is on**: a note that Android runs one VPN at a time, so
+     SocketFlip's tunnel will switch the other one off. Tap **Got it** to carry on.
 
 4. A round blue button appears on the left of the screen. Drag it anywhere.
 
