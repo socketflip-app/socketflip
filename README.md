@@ -78,8 +78,10 @@ Things that do **not** work, for the record:
 - A per-app firewall block only stalls the connection silently. A short stall is
   never noticed, so nothing reconnects.
 
-Taps less than 10 seconds apart are ignored: a second disconnect while the app is
-still reconnecting can leave it stuck on its reconnect screen.
+Taps closer together than the cooldown (10 seconds unless you change it in
+Settings) are ignored: a second disconnect while the app is still reconnecting can
+leave it stuck on its reconnect screen. A ring around the button shows the time
+left.
 
 While the tunnel is up the status bar shows a VPN key. That is expected; the next
 tap takes it down again (and is also a reconnect).

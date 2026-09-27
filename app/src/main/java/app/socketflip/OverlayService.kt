@@ -9,16 +9,13 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.content.res.Configuration
 import android.graphics.PixelFormat
-import android.graphics.drawable.GradientDrawable
 import android.os.Build
 import android.os.IBinder
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
-import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
-import android.widget.ImageView
 import android.widget.Toast
 import kotlin.math.hypot
 
@@ -30,18 +27,15 @@ class OverlayService : Service() {
 
         private const val CHANNEL = "overlay"
         private const val NOTIFICATION_ID = 1
-        private const val SIZE_DP = 52
-        private const val IDLE_COLOR = 0xCC1E88E5.toInt()
-        private const val FLASH_COLOR = 0xEEFFA000.toInt()
-        private const val FLASH_MS = 600L
 
         @Volatile var running = false
             private set
     }
 
     private lateinit var wm: WindowManager
-    private var button: ImageView? = null
+    private var button: FlipButtonView? = null
     private var params: WindowManager.LayoutParams? = null
+    private val redraw: () -> Unit = { button?.invalidate() }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,6 +45,7 @@ class OverlayService : Service() {
         wm = getSystemService(WindowManager::class.java)
         startInForeground()
         addButton()
+        FlipVpnService.listeners.add(redraw)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -60,6 +55,7 @@ class OverlayService : Service() {
 
     override fun onDestroy() {
         running = false
+        FlipVpnService.listeners.remove(redraw)
         // Never crash over the target app: the view may already be detached.
         button?.let {
             try {
@@ -105,16 +101,10 @@ class OverlayService : Service() {
     }
 
     private fun addButton() {
-        val size = (SIZE_DP * resources.displayMetrics.density).toInt()
-        val pad = size / 4
-        val background = GradientDrawable().apply {
-            shape = GradientDrawable.OVAL
-            setColor(IDLE_COLOR)
-        }
-        val view = ImageView(this).apply {
-            setImageResource(R.drawable.ic_flip)
-            setPadding(pad, pad, pad, pad)
-            this.background = background
+        val look = Look.DEFAULT
+        val size = (look.sizeDp * resources.displayMetrics.density).toInt()
+        val view = FlipButtonView(this).apply {
+            this.look = look
             contentDescription = getString(R.string.action_flip)
         }
         val (x, y) = Prefs.position(this)
@@ -135,7 +125,7 @@ class OverlayService : Service() {
         var startX = 0
         var startY = 0
         var dragging = false
-        view.setOnClickListener { tapped(it, background) }
+        view.setOnClickListener { tapped(view) }
         view.setOnTouchListener { v, e ->
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
@@ -201,14 +191,13 @@ class OverlayService : Service() {
         }
     }
 
-    private fun tapped(view: View, background: GradientDrawable) {
+    private fun tapped(view: FlipButtonView) {
         // CONFIRM is Android 11+; Android 10 gets the plain tap feedback.
-        view.performHapticFeedback(
+        if (Prefs.haptics(this)) view.performHapticFeedback(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM
             else HapticFeedbackConstants.VIRTUAL_KEY
         )
-        background.setColor(FLASH_COLOR)
-        view.postDelayed({ background.setColor(IDLE_COLOR) }, FLASH_MS)
+        view.flash()
         FlipVpnService.flip(this)
     }
 }

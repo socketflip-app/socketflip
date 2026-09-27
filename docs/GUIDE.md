@@ -78,11 +78,15 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 
 ## 5. Using it
 
-- Open the app you chose, and when you want a clean reconnect, **tap the blue
-  button once**. It flashes orange. The app should drop its connection and
-  reconnect within a second or two.
-- Taps less than 10 seconds apart are ignored, on purpose: a second disconnect
-  while the app is still reconnecting can leave it stuck.
+- Open the app you chose, and when you want a clean reconnect, **tap the
+  button once**. The app should drop its connection and reconnect within a
+  second or two.
+- The button is **blue** while SocketFlip's tunnel is down and **teal** while it
+  is up. Both are fine: every tap switches it over, and either way is a reconnect.
+- An **amber ring** around the button counts down the cooldown. Taps before it
+  runs out are ignored, on purpose: a second disconnect while the app is still
+  reconnecting can leave it stuck. The cooldown is 10 seconds; you can change it
+  in **Settings**.
 - A **key icon** appears in the status bar after the first tap and disappears
   after the next. That is normal: every tap switches SocketFlip's tunnel on or off,
   and both directions cause the reconnect.

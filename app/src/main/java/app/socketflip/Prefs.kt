@@ -12,6 +12,13 @@ object Prefs {
     private const val KEY_TIP_DISMISSED = "tip_dismissed"
     private const val KEY_OTHER_VPN_WARNED = "other_vpn_warned"
     private const val KEY_BATTERY_ASKED = "battery_asked"
+    private const val KEY_COOLDOWN = "cooldown_s"
+    private const val KEY_HAPTICS = "haptics"
+    private const val KEY_HINTS = "hints"
+
+    const val COOLDOWN_MIN_S = 3
+    const val COOLDOWN_MAX_S = 60
+    const val COOLDOWN_DEFAULT_S = 10
 
     /** Where the tip button goes: a Stripe pay-what-you-want page, opened in the browser. */
     const val TIP_URL = "https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00"
@@ -70,4 +77,22 @@ object Prefs {
 
     fun setBatteryAsked(context: Context) =
         prefs(context).edit().putBoolean(KEY_BATTERY_ASKED, true).apply()
+
+    fun cooldownSeconds(context: Context): Int =
+        prefs(context).getInt(KEY_COOLDOWN, COOLDOWN_DEFAULT_S).coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)
+
+    fun cooldownMs(context: Context): Long = cooldownSeconds(context) * 1000L
+
+    fun setCooldownSeconds(context: Context, s: Int) =
+        prefs(context).edit().putInt(KEY_COOLDOWN, s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)).apply()
+
+    /** Vibrate on a tap of the floating button. */
+    fun haptics(context: Context): Boolean = prefs(context).getBoolean(KEY_HAPTICS, true)
+
+    fun setHaptics(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_HAPTICS, on).apply()
+
+    /** Informational toasts ("still reconnecting"). Errors are always shown. */
+    fun hints(context: Context): Boolean = prefs(context).getBoolean(KEY_HINTS, true)
+
+    fun setHints(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_HINTS, on).apply()
 }

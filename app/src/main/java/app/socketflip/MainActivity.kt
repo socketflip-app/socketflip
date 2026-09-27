@@ -60,6 +60,9 @@ class MainActivity : Activity() {
         column.addView(button(getString(R.string.hide_button)) { stop() })
         status = TextView(this).apply { setPadding(0, dp(24), 0, 0) }
         column.addView(status)
+        column.addView(button(getString(R.string.settings)) {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        })
         column.addView(button(getString(R.string.check_setup)) {
             startActivity(Intent(this, CheckActivity::class.java))
         })

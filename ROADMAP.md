@@ -18,13 +18,13 @@ ship. Ideas and requests are welcome in the
       button to fix each one and a "copy report" button for bug reports (1.6)
 - [x] Ask to be exempted from battery optimisation on phones known to close
       background apps (Samsung, Xiaomi, OnePlus and others) (1.6)
+- [x] Settings page (1.7)
+- [x] Adjustable cooldown between taps (1.7)
+- [x] Vibration and hint messages can be turned off (1.7)
+- [x] Button shows whether the tunnel is up, with a ring counting down the cooldown (1.7)
 
 ## Then: settings and looks
 
-- [ ] Settings page
-- [ ] Adjustable cooldown between taps
-- [ ] Vibration and hint messages can be turned off
-- [ ] Button shows whether the tunnel is up, with a ring counting down the cooldown
 - [ ] Full colour picker for the button, the tunnel-up colour, the cooldown ring
       and the icon
 - [ ] Opacity sliders (resting and just tapped) and a size slider

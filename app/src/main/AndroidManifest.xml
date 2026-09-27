@@ -37,6 +37,11 @@
         </activity>
 
         <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:label="@string/settings" />
+
+        <activity
             android:name=".CheckActivity"
             android:exported="false"
             android:label="@string/check_title" />

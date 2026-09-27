@@ -23,6 +23,7 @@ import android.util.Log
 import android.widget.Toast
 import java.net.Inet4Address
 import java.net.InetAddress
+import java.util.concurrent.CopyOnWriteArraySet
 
 /**
  * A per-app VPN that routes nothing.
@@ -45,10 +46,6 @@ class FlipVpnService : VpnService() {
         const val ACTION_CHECK = "app.socketflip.action.CHECK"
 
         private const val TAG = "SocketFlip"
-        // A second disconnect while the target is still reconnecting can leave it
-        // stuck on its reconnect screen, so flips are spaced at least this far apart.
-        private const val COOLDOWN_MS = 10_000L
-
         // A private /32 pair the target app will never talk to, so nothing is routed.
         private const val TUN_ADDRESS = "10.111.222.1"
         private const val TUN_ROUTE = "10.111.222.2"
@@ -60,6 +57,21 @@ class FlipVpnService : VpnService() {
         @Volatile private var lastFlip = 0L
 
         val isUp: Boolean get() = tun != null
+
+        /** Called on the main thread whenever the tunnel goes up or down. */
+        val listeners = CopyOnWriteArraySet<() -> Unit>()
+
+        /**
+         * How much of the cooldown is left, from 1 (just flipped) to 0 (ready).
+         * A second disconnect while the target is still reconnecting can leave it
+         * stuck on its reconnect screen, so flips are spaced at least this far apart.
+         */
+        fun cooldownLeft(context: Context): Float {
+            if (lastFlip == 0L) return 0f
+            val total = Prefs.cooldownMs(context)
+            val left = lastFlip + total - SystemClock.elapsedRealtime()
+            return if (left <= 0) 0f else left.toFloat() / total
+        }
 
         /**
          * True when a VPN other than SocketFlip is carrying this phone's traffic.
@@ -118,15 +130,15 @@ class FlipVpnService : VpnService() {
 
     private fun flipOnce() {
         val now = SystemClock.elapsedRealtime()
-        if (lastFlip != 0L && now - lastFlip < COOLDOWN_MS) {
-            toast(getString(R.string.cooldown))
+        if (cooldownLeft(this) > 0f) {
+            if (Prefs.hints(this)) toast(getString(R.string.cooldown))
             return
         }
         val wasUp = tun != null
         if (wasUp) down() else {
             val replacing = otherVpnActive(this)
             up()
-            if (replacing && tun != null) toast(getString(R.string.replaced_vpn))
+            if (replacing && tun != null && Prefs.hints(this)) toast(getString(R.string.replaced_vpn))
         }
         // Only a real state change disconnected the app; a flip that bailed must not
         // hold the next tap back behind the cooldown.
@@ -311,8 +323,9 @@ class FlipVpnService : VpnService() {
         toast(getString(R.string.always_on_title))
     }
 
-    /** Asks the Quick Settings tile to redraw so it shows whether the tunnel is up. */
+    /** Tells the tile, and anything else watching, that the tunnel may have changed. */
     private fun refreshTile() {
+        listeners.forEach { it() }
         try {
             TileService.requestListeningState(this, ComponentName(this, FlipTileService::class.java))
         } catch (e: Exception) {

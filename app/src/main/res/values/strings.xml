@@ -87,6 +87,13 @@
     <string name="battery_title">Keep the button on screen?</string>
     <string name="battery_text">Phones from some makers close apps like SocketFlip in the background to save battery, and the floating button disappears. Allowing SocketFlip to run in the background stops that. It uses no battery while it is idle.</string>
     <string name="battery_allow">Allow</string>
+    <string name="settings">Settings</string>
+    <string name="settings_behaviour">Behaviour</string>
+    <string name="settings_cooldown">Cooldown between taps: %1$d s</string>
+    <string name="settings_cooldown_short">Shorter than 10 seconds can leave some apps stuck on their reconnecting screen.</string>
+    <string name="settings_cooldown_help">Taps closer together than this are ignored, so a second disconnect cannot land while the app is still reconnecting. The ring around the button shows the time left.</string>
+    <string name="settings_haptics">Vibrate when I tap the button</string>
+    <string name="settings_hints">Show hint messages (errors are always shown)</string>
     <string name="channel_name">Floating button</string>
     <string name="notif_text">Tap the floating button to reconnect %1$s</string>
     <string name="action_flip">Flip now</string>

@@ -1,0 +1,1 @@
+New Settings page. The cooldown between taps can now be set from 3 to 60 seconds (10 by default), and vibration and hint messages can be switched off. The floating button now shows what is going on: blue while the tunnel is down, teal while it is up, and an amber ring that counts down the cooldown.

@@ -87,8 +87,9 @@ setting SocketFlip needs, with a **Fix** button next to anything wrong. If that 
 all green, work down this list:
 
 1. **Wrong target app.** Open SocketFlip and check the **Target app** line.
-2. **Tapped too soon.** Taps less than 10 seconds apart are ignored. A short
-   message says "Still reconnecting" when this happens.
+2. **Tapped too soon.** Taps before the cooldown ring has run out are ignored. A
+   short message says "Still reconnecting" when this happens (unless hint
+   messages are turned off in Settings).
 3. **The app uses UDP, not TCP.** SocketFlip only resets TCP connections. Voice and
    video calls, most game voice chat and anything using QUIC / HTTP/3 are UDP and
    carry on untouched. See [What can SocketFlip reset?](#what-can-socketflip-reset)
@@ -123,9 +124,11 @@ to be Always-on, and work phones may set it too. To use SocketFlip, open
 ### The app got stuck on its reconnecting screen
 
 Usually a second disconnect arrived while the app was still reconnecting. Tap the
-app's own reconnect button, or wait for it to retry. The 10-second cooldown exists
-to prevent this; if it keeps happening with one particular app, please open an
-issue saying what kind of app it is (game, chat, browser...).
+app's own reconnect button, or wait for it to retry. The cooldown exists to
+prevent this. If you have shortened it in **Settings**, set it back to 10 seconds
+or more. If it keeps happening with one particular app, please open an issue
+saying what kind of app it is (game, chat,
+browser...).
 
 ### The floating button disappeared
 
