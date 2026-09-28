@@ -11,8 +11,8 @@ android {
         applicationId = "app.socketflip"
         minSdk = 29
         targetSdk = 35
-        versionCode = 8
-        versionName = "1.7"
+        versionCode = 9
+        versionName = "1.8"
     }
 
     // Release signing comes from ~/.gradle/gradle.properties (never the repo):

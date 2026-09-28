@@ -1,5 +1,10 @@
 package app.socketflip
 
+import android.graphics.Color
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.pow
+
 /** How the floating button looks. Colours are opaque ARGB; opacity is separate. */
 data class Look(
     val downColor: Int,
@@ -10,7 +15,20 @@ data class Look(
     val pressedAlpha: Float,
     val sizeDp: Int,
 ) {
+    /** True when the icon would be hard to see on either button colour. */
+    val lowContrast: Boolean
+        get() = contrast(iconColor, downColor) < MIN_CONTRAST || contrast(iconColor, upColor) < MIN_CONTRAST
+
     companion object {
+        /**
+         * Opacity never goes below this: a button you cannot see is a button you
+         * cannot find again. Reset lives in the app, never on the button itself.
+         */
+        const val MIN_ALPHA = 0.15f
+        const val MIN_SIZE_DP = 36
+        const val MAX_SIZE_DP = 96
+        private const val MIN_CONTRAST = 3.0
+
         val DEFAULT = Look(
             downColor = 0xFF1E88E5.toInt(),
             upColor = 0xFF00897B.toInt(),
@@ -20,5 +38,42 @@ data class Look(
             pressedAlpha = 1f,
             sizeDp = 52,
         )
+
+        /** Small and faint, for a button that stays out of the way until it is needed. */
+        val SUBTLE = Look(
+            downColor = 0xFF616161.toInt(),
+            upColor = 0xFF37474F.toInt(),
+            ringColor = 0xFFE0E0E0.toInt(),
+            iconColor = 0xFFFFFFFF.toInt(),
+            idleAlpha = 0.35f,
+            pressedAlpha = 0.9f,
+            sizeDp = 44,
+        )
+
+        /** Large, solid and easy to tell apart. */
+        val HIGH_CONTRAST = Look(
+            downColor = 0xFF000000.toInt(),
+            upColor = 0xFF4A148C.toInt(),
+            ringColor = 0xFFFFEB3B.toInt(),
+            iconColor = 0xFFFFEB3B.toInt(),
+            idleAlpha = 1f,
+            pressedAlpha = 1f,
+            sizeDp = 64,
+        )
+
+        /** WCAG contrast ratio between two colours, 1 (same) to 21 (black on white). */
+        fun contrast(a: Int, b: Int): Double {
+            val la = luminance(a)
+            val lb = luminance(b)
+            return (max(la, lb) + 0.05) / (min(la, lb) + 0.05)
+        }
+
+        private fun luminance(c: Int): Double {
+            fun ch(v: Int): Double {
+                val s = v / 255.0
+                return if (s <= 0.03928) s / 12.92 else ((s + 0.055) / 1.055).pow(2.4)
+            }
+            return 0.2126 * ch(Color.red(c)) + 0.7152 * ch(Color.green(c)) + 0.0722 * ch(Color.blue(c))
+        }
     }
 }

@@ -22,14 +22,11 @@ ship. Ideas and requests are welcome in the
 - [x] Adjustable cooldown between taps (1.7)
 - [x] Vibration and hint messages can be turned off (1.7)
 - [x] Button shows whether the tunnel is up, with a ring counting down the cooldown (1.7)
-
-## Then: settings and looks
-
-- [ ] Full colour picker for the button, the tunnel-up colour, the cooldown ring
-      and the icon
-- [ ] Opacity sliders (resting and just tapped) and a size slider
-- [ ] Live preview, presets, and reset to default
-- [ ] Snap the button to the screen edge
+- [x] Full colour picker for the button, the tunnel-up colour, the cooldown ring
+      and the icon (1.8)
+- [x] Opacity sliders (resting and just tapped) and a size slider (1.8)
+- [x] Live preview, presets, and reset to default (1.8)
+- [x] Snap the button to the screen edge (1.8)
 
 ## Later
 

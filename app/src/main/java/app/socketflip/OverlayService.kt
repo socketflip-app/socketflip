@@ -1,11 +1,15 @@
 package app.socketflip
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
+import android.animation.ValueAnimator
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.ServiceInfo
 import android.content.res.Configuration
 import android.graphics.PixelFormat
@@ -14,6 +18,7 @@ import android.os.IBinder
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewConfiguration
 import android.view.WindowManager
 import android.widget.Toast
@@ -37,6 +42,9 @@ class OverlayService : Service() {
     private var params: WindowManager.LayoutParams? = null
     private val redraw: () -> Unit = { button?.invalidate() }
 
+    // Held in a field: SharedPreferences only keeps a weak reference to listeners.
+    private val settingsChanged = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> applyLook() }
+
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
@@ -46,6 +54,7 @@ class OverlayService : Service() {
         startInForeground()
         addButton()
         FlipVpnService.listeners.add(redraw)
+        Prefs.listen(this, settingsChanged)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -56,6 +65,7 @@ class OverlayService : Service() {
     override fun onDestroy() {
         running = false
         FlipVpnService.listeners.remove(redraw)
+        Prefs.unlisten(this, settingsChanged)
         // Never crash over the target app: the view may already be detached.
         button?.let {
             try {
@@ -101,8 +111,8 @@ class OverlayService : Service() {
     }
 
     private fun addButton() {
-        val look = Look.DEFAULT
-        val size = (look.sizeDp * resources.displayMetrics.density).toInt()
+        val look = Prefs.look(this)
+        val size = px(look.sizeDp)
         val view = FlipButtonView(this).apply {
             this.look = look
             contentDescription = getString(R.string.action_flip)
@@ -146,7 +156,9 @@ class OverlayService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (dragging) Prefs.setPosition(this, lp.x, lp.y) else v.performClick()
+                    if (!dragging) v.performClick()
+                    else if (Prefs.snapToEdge(this)) snap(v, lp)
+                    else Prefs.setPosition(this, lp.x, lp.y)
                     true
                 }
                 else -> false
@@ -190,6 +202,48 @@ class OverlayService : Service() {
             // Not attached any more.
         }
     }
+
+    /** Redraws the button after a change on the settings screen, resizing it if needed. */
+    private fun applyLook() {
+        val view = button ?: return
+        val lp = params ?: return
+        val look = Prefs.look(this)
+        view.look = look
+        val size = px(look.sizeDp)
+        if (lp.width != size) {
+            lp.width = size
+            lp.height = size
+            keepOnScreen(lp)
+            try {
+                wm.updateViewLayout(view, lp)
+            } catch (e: IllegalArgumentException) {
+                // Not attached any more; nothing to resize.
+            }
+        }
+    }
+
+    /** Slides the button to whichever side of the screen is nearer, then saves the spot. */
+    private fun snap(view: View, lp: WindowManager.LayoutParams) {
+        val screen = resources.displayMetrics.widthPixels
+        val target = if (lp.x + lp.width / 2 < screen / 2) 0 else screen - lp.width
+        ValueAnimator.ofInt(lp.x, target).apply {
+            duration = 180
+            addUpdateListener {
+                lp.x = it.animatedValue as Int
+                try {
+                    wm.updateViewLayout(view, lp)
+                } catch (e: IllegalArgumentException) {
+                    cancel()
+                }
+            }
+            addListener(object : AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: Animator) = Prefs.setPosition(this@OverlayService, lp.x, lp.y)
+            })
+            start()
+        }
+    }
+
+    private fun px(dp: Int) = (dp * resources.displayMetrics.density).toInt()
 
     private fun tapped(view: FlipButtonView) {
         // CONFIRM is Android 11+; Android 10 gets the plain tap feedback.

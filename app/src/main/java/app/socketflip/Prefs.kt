@@ -1,6 +1,7 @@
 package app.socketflip
 
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 
 object Prefs {
@@ -15,6 +16,14 @@ object Prefs {
     private const val KEY_COOLDOWN = "cooldown_s"
     private const val KEY_HAPTICS = "haptics"
     private const val KEY_HINTS = "hints"
+    private const val KEY_SNAP = "snap_to_edge"
+    private const val KEY_DOWN = "look_down"
+    private const val KEY_UP = "look_up"
+    private const val KEY_RING = "look_ring"
+    private const val KEY_ICON = "look_icon"
+    private const val KEY_IDLE_ALPHA = "look_idle_alpha"
+    private const val KEY_PRESSED_ALPHA = "look_pressed_alpha"
+    private const val KEY_SIZE = "look_size"
 
     const val COOLDOWN_MIN_S = 3
     const val COOLDOWN_MAX_S = 60
@@ -95,4 +104,40 @@ object Prefs {
     fun hints(context: Context): Boolean = prefs(context).getBoolean(KEY_HINTS, true)
 
     fun setHints(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_HINTS, on).apply()
+
+    /** Slide the button to the nearest side of the screen when it is let go. */
+    fun snapToEdge(context: Context): Boolean = prefs(context).getBoolean(KEY_SNAP, false)
+
+    fun setSnapToEdge(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_SNAP, on).apply()
+
+    fun look(context: Context): Look {
+        val p = prefs(context)
+        val d = Look.DEFAULT
+        return Look(
+            downColor = p.getInt(KEY_DOWN, d.downColor),
+            upColor = p.getInt(KEY_UP, d.upColor),
+            ringColor = p.getInt(KEY_RING, d.ringColor),
+            iconColor = p.getInt(KEY_ICON, d.iconColor),
+            idleAlpha = p.getFloat(KEY_IDLE_ALPHA, d.idleAlpha).coerceIn(Look.MIN_ALPHA, 1f),
+            pressedAlpha = p.getFloat(KEY_PRESSED_ALPHA, d.pressedAlpha).coerceIn(Look.MIN_ALPHA, 1f),
+            sizeDp = p.getInt(KEY_SIZE, d.sizeDp).coerceIn(Look.MIN_SIZE_DP, Look.MAX_SIZE_DP),
+        )
+    }
+
+    fun setLook(context: Context, look: Look) = prefs(context).edit()
+        .putInt(KEY_DOWN, look.downColor)
+        .putInt(KEY_UP, look.upColor)
+        .putInt(KEY_RING, look.ringColor)
+        .putInt(KEY_ICON, look.iconColor)
+        .putFloat(KEY_IDLE_ALPHA, look.idleAlpha.coerceIn(Look.MIN_ALPHA, 1f))
+        .putFloat(KEY_PRESSED_ALPHA, look.pressedAlpha.coerceIn(Look.MIN_ALPHA, 1f))
+        .putInt(KEY_SIZE, look.sizeDp.coerceIn(Look.MIN_SIZE_DP, Look.MAX_SIZE_DP))
+        .apply()
+
+    /** Lets the floating button redraw as soon as a setting changes. */
+    fun listen(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs(context).registerOnSharedPreferenceChangeListener(listener)
+
+    fun unlisten(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) =
+        prefs(context).unregisterOnSharedPreferenceChangeListener(listener)
 }

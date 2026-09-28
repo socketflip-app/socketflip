@@ -142,7 +142,14 @@ browser...).
 
 ### The button is in the way
 
-Drag it to any edge. It remembers where you left it.
+Drag it to any edge. It remembers where you left it. In **Settings > Appearance**
+you can also make it smaller or more see-through while it is resting, and turn
+on **Snap to the screen edge** so it tucks itself against the side when you let go.
+
+### I made the button too faint or the wrong colour
+
+Open SocketFlip, tap **Settings**, and tap **Reset appearance to default** at the
+bottom. Opacity never goes below 15%, so the button can always be found again.
 
 ### A key icon stays in the status bar
 

@@ -1,0 +1,1 @@
+Make the button your own: Settings now has an Appearance section with a full colour picker (wheel, brightness and hex code) for the button, the tunnel-up colour, the cooldown ring and the icon, opacity sliders for resting and just tapped, a size slider, a live preview, and Default, Subtle and High contrast presets. The button can also snap to the screen edge when you let go.

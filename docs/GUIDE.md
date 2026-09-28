@@ -91,6 +91,15 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
   after the next. That is normal: every tap switches SocketFlip's tunnel on or off,
   and both directions cause the reconnect.
 
+### Making it your own
+
+**Settings > Appearance** has a colour picker for the button (tunnel down and
+tunnel up), the cooldown ring and the icon, plus sliders for size and for
+opacity, both while resting and just after a tap. A preview at the top shows
+every state as you change things. **Default**, **Subtle** and **High contrast**
+presets are there if you just want a quick change, and **Reset appearance to
+default** undoes everything.
+
 ### Other ways to trigger it
 
 - **Quick Settings tile**: pull down the notification shade twice, tap the
