@@ -59,15 +59,16 @@ another app and back reportedly already gives some games a reconnect.
 
 ## It is not working
 
-### The "Display over other apps" switch is greyed out
+### The "Display over other apps" or "Usage access" switch is greyed out
 
 On Android 13 and newer, some settings are locked for apps installed from a
-browser or file manager ("restricted settings"). To unlock them:
+browser or file manager ("restricted settings"). Android 15 added Usage access to
+that list, which the settings that follow the target app need. To unlock them:
 
 1. Open **Settings > Apps > SocketFlip** (or long-press the icon, **App info**).
 2. Tap the **three-dot menu** in the top corner.
 3. Tap **Allow restricted settings** and confirm with your PIN or fingerprint.
-4. Go back and turn on **Display over other apps**.
+4. Go back and turn on **Display over other apps** (or **Usage access**).
 
 If there is no three-dot menu, the setting is not restricted on your phone; try
 the switch again.
@@ -154,7 +155,8 @@ bottom. Opacity never goes below 15%, so the button can always be found again.
 ### A key icon stays in the status bar
 
 SocketFlip's tunnel is up. That does nothing to your traffic; the next tap removes
-it, and so does **Stop** on the notification.
+it, and so does **Stop** on the notification. To have it go away by itself, turn on
+**Settings > Take the tunnel down when I leave the target app**.
 
 ### "SocketFlip could not reconnect: ..."
 
@@ -202,8 +204,10 @@ only hand out IPv6 DNS servers. Nothing changes while the tunnel is down.
 
 ### Does it drain the battery or slow my connection?
 
-No. Between taps it does nothing except keep the button on screen. The tunnel
-carries no traffic, so it cannot slow anything down.
+Not noticeably. Between taps it only keeps the button on screen, unless you turn
+on one of the settings that follow the target app, which check which app is in
+front about once a second while the screen is on. The tunnel carries no traffic,
+so it cannot slow anything down.
 
 ### Is it different from turning on airplane mode?
 

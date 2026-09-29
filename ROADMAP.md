@@ -27,13 +27,13 @@ ship. Ideas and requests are welcome in the
 - [x] Opacity sliders (resting and just tapped) and a size slider (1.8)
 - [x] Live preview, presets, and reset to default (1.8)
 - [x] Snap the button to the screen edge (1.8)
+- [x] Only show the button while a target app is on screen (optional, needs
+      Usage Access) (1.9)
+- [x] Take the tunnel down when you leave the target apps, so the VPN key does not
+      linger (1.9)
 
 ## Later
 
-- [ ] Only show the button while a target app is on screen (optional, needs
-      Usage Access)
-- [ ] Take the tunnel down when you leave the target apps, so the VPN key does not
-      linger
 - [ ] More than one target app: tick as many as you like and each tap reconnects
       all of them
 - [ ] Each target app can have its own cooldown, with Cooldown and Remove buttons

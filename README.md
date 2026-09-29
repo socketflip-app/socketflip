@@ -118,6 +118,7 @@ signed with the same key, so updates install over the top and keep your settings
 | Display over other apps | To draw the floating button |
 | Foreground service, notifications | To keep the button alive over the other app |
 | Access network state | To hand the target app your current DNS servers |
+| Usage access (optional, off unless you turn it on) | To see which app is on screen, for "only show the button over the target app" and "take the tunnel down when I leave it" |
 | Ask to ignore battery optimisations | To offer Android's own "run in the background" prompt, so the button is not closed |
 
 SocketFlip has no `INTERNET` permission, collects nothing and sends nothing.

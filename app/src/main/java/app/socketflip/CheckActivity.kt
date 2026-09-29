@@ -187,6 +187,16 @@ class CheckActivity : Activity() {
             }
         )
 
+        if (Prefs.onlyOverTarget(this@CheckActivity) || Prefs.dropOnLeave(this@CheckActivity)) {
+            add(
+                if (ForegroundWatcher.granted(this@CheckActivity))
+                    Item(Level.OK, getString(R.string.check_usage), getString(R.string.check_usage_on))
+                else Item(Level.WARN, getString(R.string.check_usage), getString(R.string.check_usage_off)) {
+                    open(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                }
+            )
+        }
+
         add(
             Item(
                 Level.INFO, getString(R.string.check_button),

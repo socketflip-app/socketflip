@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- Read the current network's DNS servers to hand to the target app. -->
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -13,11 +14,24 @@
          floating button is not closed in the background. -->
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
+    <!-- Optional: see which app is on screen, for "only show the button over the
+         target app" and "take the tunnel down when I leave it". Granted by the user
+         in Settings > Usage access, and only used while one of those is on. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
     <!-- List launchable apps so the user can choose the target. -->
     <queries>
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- See which app is the home screen: leaving the target for it counts at once,
+             and it shows briefly while an emergency restart brings the app back. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
         </intent>
     </queries>
 

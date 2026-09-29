@@ -14,7 +14,9 @@ import android.content.pm.ServiceInfo
 import android.content.res.Configuration
 import android.graphics.PixelFormat
 import android.os.Build
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -32,6 +34,8 @@ class OverlayService : Service() {
 
         private const val CHANNEL = "overlay"
         private const val NOTIFICATION_ID = 1
+        // How long another app must stay in front before it counts as leaving the target.
+        private const val LEAVE_CONFIRM_MS = 2000L
 
         @Volatile var running = false
             private set
@@ -43,7 +47,16 @@ class OverlayService : Service() {
     private val redraw: () -> Unit = { button?.invalidate() }
 
     // Held in a field: SharedPreferences only keeps a weak reference to listeners.
-    private val settingsChanged = SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> applyLook() }
+    private val settingsChanged = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        applyLook()
+        updateWatcher()
+    }
+
+    private var watcher: ForegroundWatcher? = null
+    private var foreground: String? = null
+    // The last app in front, other than SocketFlip itself, was a target.
+    private var inTarget = false
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -55,6 +68,7 @@ class OverlayService : Service() {
         addButton()
         FlipVpnService.listeners.add(redraw)
         Prefs.listen(this, settingsChanged)
+        updateWatcher()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -66,6 +80,9 @@ class OverlayService : Service() {
         running = false
         FlipVpnService.listeners.remove(redraw)
         Prefs.unlisten(this, settingsChanged)
+        watcher?.stop()
+        watcher = null
+        handler.removeCallbacks(dropIfLeft)
         // Never crash over the target app: the view may already be detached.
         button?.let {
             try {
@@ -196,6 +213,91 @@ class OverlayService : Service() {
         val view = button ?: return
         val lp = params ?: return
         keepOnScreen(lp)
+        try {
+            wm.updateViewLayout(view, lp)
+        } catch (e: IllegalArgumentException) {
+            // Not attached any more.
+        }
+    }
+
+    /** Runs the foreground watcher only while a setting needs it and Usage Access is granted. */
+    private fun updateWatcher() {
+        val needed = (Prefs.onlyOverTarget(this) || Prefs.dropOnLeave(this)) && ForegroundWatcher.granted(this)
+        if (needed && watcher == null) {
+            watcher = ForegroundWatcher(this) { foregroundChanged(it) }.also { it.start() }
+        } else if (!needed && watcher != null) {
+            watcher?.stop()
+            watcher = null
+            foreground = null
+        }
+        setShown(shouldShow())
+    }
+
+    private fun foregroundChanged(pkg: String) {
+        foreground = pkg
+        setShown(shouldShow())
+        // SocketFlip's own screens and dialogs are not leaving the target.
+        if (pkg == packageName) return
+        if (isTarget(pkg)) {
+            inTarget = true
+            handler.removeCallbacks(dropIfLeft)
+            return
+        }
+        if (!inTarget) return
+        inTarget = false
+        // Play's purchase sheet, a sign-in page or the other half of a split screen
+        // come from other apps but sit on top of the target without leaving it. So
+        // only the home screen counts at once; any other app must stay in front a
+        // moment. dropIfLeft also waits out the cooldown.
+        handler.removeCallbacks(dropIfLeft)
+        handler.postDelayed(dropIfLeft, if (pkg == homePackage) 0L else LEAVE_CONFIRM_MS)
+    }
+
+    private fun isTarget(pkg: String?) = pkg != null && pkg == Prefs.target(this)
+
+    /** The home screen app, which is always a real "left the target". */
+    private val homePackage: String? by lazy {
+        packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), 0)
+            ?.activityInfo?.packageName
+    }
+
+    /**
+     * Drops the tunnel once the target has really been left. The target is in the
+     * background then, so this disconnect costs nothing, and the VPN key does not
+     * linger in the status bar. Inside the cooldown the target may still be
+     * reconnecting from the last tap, and a second disconnect then can wedge it, so
+     * the drop waits for the cooldown to end (and is cancelled if the target comes back).
+     */
+    private val dropIfLeft: Runnable = object : Runnable {
+        override fun run() {
+            if (isTarget(foreground) || !Prefs.dropOnLeave(this@OverlayService) || !FlipVpnService.isUp) return
+            val wait = (FlipVpnService.cooldownLeft(this@OverlayService) * Prefs.cooldownMs(this@OverlayService)).toLong()
+            if (wait > 0) {
+                handler.postDelayed(this, wait + 100)
+                return
+            }
+            FlipVpnService.stop(this@OverlayService)
+        }
+    }
+
+    private fun shouldShow(): Boolean {
+        if (watcher == null || !Prefs.onlyOverTarget(this)) return true
+        val fg = foreground ?: return true
+        return fg == Prefs.target(this) || fg == packageName
+    }
+
+    /**
+     * Hides or shows the button. A hidden button's window must also stop taking
+     * touches, or it would swallow taps meant for the app underneath.
+     */
+    private fun setShown(shown: Boolean) {
+        val view = button ?: return
+        val lp = params ?: return
+        val visibility = if (shown) View.VISIBLE else View.GONE
+        if (view.visibility == visibility) return
+        view.visibility = visibility
+        lp.flags = if (shown) lp.flags and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE.inv()
+        else lp.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         try {
             wm.updateViewLayout(view, lp)
         } catch (e: IllegalArgumentException) {

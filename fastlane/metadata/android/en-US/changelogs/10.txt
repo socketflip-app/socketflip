@@ -1,0 +1,1 @@
+Two optional settings that follow the target app: show the floating button only while that app is on screen, and take the tunnel down when you leave it so the VPN key does not linger. Both need Usage access, which SocketFlip only asks for when you turn one of them on, and both are off by default.

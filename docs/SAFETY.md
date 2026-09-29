@@ -86,7 +86,21 @@ Lets SocketFlip show Android's own "let this app run in the background?" prompt.
 Some phone makers close apps in the background to save battery, which makes the
 floating button disappear. SocketFlip only asks once, on phones known to do this,
 and from the **Check setup** screen. You can say no. Allowing it does not make
-SocketFlip do anything more: between taps it only keeps the button on screen.
+SocketFlip do anything more: between taps it only keeps the button on screen, plus
+a check of which app is in front about once a second if you turn on a setting that
+needs [Usage access](#usage-access-optional).
+
+### Usage access (optional)
+Lets SocketFlip see which app is on screen. It is only asked for if you turn on
+**Only show the button while the target app is on screen** or **Take the tunnel
+down when I leave the target app** in Settings, and you grant it yourself in
+**Settings > Usage access** (on Android 15 and newer you may first need
+**Allow restricted settings**, see the
+[FAQ](FAQ.md#the-display-over-other-apps-or-usage-access-switch-is-greyed-out)).
+SocketFlip only looks at which app is in front,
+about once a second while one of those settings is on. It keeps nothing, and with
+no internet permission it could not send it anywhere. Leave both settings off and
+this permission is never used.
 
 ### VPN (the connection request)
 Explained in full in the next section.

@@ -58,7 +58,7 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
      **on**, then go back.
      If the switch is greyed out or says it is controlled by a restricted
      setting, see [The "Display over other apps" switch is greyed
-     out](FAQ.md#the-display-over-other-apps-switch-is-greyed-out).
+     out](FAQ.md#the-display-over-other-apps-or-usage-access-switch-is-greyed-out).
    - **Notifications**: tap **Allow**. The notification keeps the button alive
      and gives you **Flip now** and **Stop** buttons. If you refuse, the button
      still works, you just do not see the notification.
@@ -90,6 +90,16 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 - A **key icon** appears in the status bar after the first tap and disappears
   after the next. That is normal: every tap switches SocketFlip's tunnel on or off,
   and both directions cause the reconnect.
+
+### Following the target app (optional)
+
+Two settings follow which app is on screen. Both need **Usage access**, which
+SocketFlip asks for when you turn one on:
+
+- **Only show the button while the target app is on screen** hides the button
+  everywhere else. The notification stays, so you can still stop it.
+- **Take the tunnel down when I leave the target app** removes the VPN key as soon
+  as you switch away, so it does not linger or keep another VPN off.
 
 ### Making it your own
 

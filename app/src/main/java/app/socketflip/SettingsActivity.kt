@@ -1,9 +1,14 @@
 package app.socketflip
 
 import android.app.Activity
+import android.app.AlertDialog
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.graphics.drawable.GradientDrawable
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
@@ -94,6 +99,78 @@ class SettingsActivity : Activity() {
 
         switch(R.string.settings_haptics, Prefs.haptics(this)) { Prefs.setHaptics(this, it) }
         switch(R.string.settings_hints, Prefs.hints(this)) { Prefs.setHints(this, it) }
+
+        // The two settings that need Usage access sit together, with the warning
+        // directly under them, so it is obvious which settings it is about.
+        heading(R.string.settings_follow_heading)
+        switch(R.string.settings_only_over_target, Prefs.onlyOverTarget(this)) {
+            Prefs.setOnlyOverTarget(this, it)
+            if (it) askForUsageAccess()
+            refreshUsageNote()
+        }
+        switch(R.string.settings_drop_on_leave, Prefs.dropOnLeave(this)) {
+            Prefs.setDropOnLeave(this, it)
+            if (it) askForUsageAccess()
+            refreshUsageNote()
+        }
+        usageText = TextView(this).apply { setTextColor(0xFFEF6C00.toInt()) }
+        usageNote = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(4), 0, dp(8))
+            addView(usageText)
+            addView(Button(context).apply {
+                text = getString(R.string.settings_usage_allow)
+                setOnClickListener { openUsageAccess() }
+            }, WRAP_CONTENT, WRAP_CONTENT)
+        }
+        column.addView(usageNote)
+    }
+
+    private var usageNote: LinearLayout? = null
+    private var usageText: TextView? = null
+
+    override fun onResume() {
+        super.onResume()
+        refreshUsageNote()
+        // Coming back from the Usage access screen: the overlay only rechecks on a
+        // settings change, so nudge it.
+        Prefs.touch(this)
+    }
+
+    /** Names the setting that cannot work, rather than pointing vaguely "above". */
+    private fun refreshUsageNote() {
+        val on = listOfNotNull(
+            getString(R.string.settings_only_over_target).takeIf { Prefs.onlyOverTarget(this) },
+            getString(R.string.settings_drop_on_leave).takeIf { Prefs.dropOnLeave(this) },
+        )
+        val missing = on.isNotEmpty() && !ForegroundWatcher.granted(this)
+        usageNote?.visibility = if (missing) View.VISIBLE else View.GONE
+        if (missing) {
+            usageText?.text = if (on.size == 1) getString(R.string.settings_usage_missing_one, on[0])
+            else getString(R.string.settings_usage_missing_both)
+        }
+    }
+
+    private fun askForUsageAccess() {
+        if (ForegroundWatcher.granted(this)) return
+        AlertDialog.Builder(this)
+            .setTitle(R.string.settings_usage_title)
+            .setMessage(R.string.settings_usage_text)
+            .setPositiveButton(R.string.settings_usage_open) { _, _ -> openUsageAccess() }
+            .setNegativeButton(R.string.tip_not_now, null)
+            .show()
+    }
+
+    private fun openUsageAccess() {
+        try {
+            startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS, Uri.parse("package:$packageName")))
+        } catch (e: ActivityNotFoundException) {
+            try {
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            } catch (e: ActivityNotFoundException) {
+                // No such screen on this phone.
+            }
+        }
     }
 
     private fun appearance() {

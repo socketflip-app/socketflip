@@ -17,6 +17,9 @@ object Prefs {
     private const val KEY_HAPTICS = "haptics"
     private const val KEY_HINTS = "hints"
     private const val KEY_SNAP = "snap_to_edge"
+    private const val KEY_ONLY_OVER_TARGET = "only_over_target"
+    private const val KEY_DROP_ON_LEAVE = "drop_on_leave"
+    private const val KEY_TOUCH = "touch"
     private const val KEY_DOWN = "look_down"
     private const val KEY_UP = "look_up"
     private const val KEY_RING = "look_ring"
@@ -140,4 +143,19 @@ object Prefs {
 
     fun unlisten(context: Context, listener: SharedPreferences.OnSharedPreferenceChangeListener) =
         prefs(context).unregisterOnSharedPreferenceChangeListener(listener)
+
+    /** Hide the floating button unless the target app is on screen (needs Usage Access). */
+    fun onlyOverTarget(context: Context): Boolean = prefs(context).getBoolean(KEY_ONLY_OVER_TARGET, false)
+
+    fun setOnlyOverTarget(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean(KEY_ONLY_OVER_TARGET, on).apply()
+
+    /** Take the tunnel down when the user leaves the target app (needs Usage Access). */
+    fun dropOnLeave(context: Context): Boolean = prefs(context).getBoolean(KEY_DROP_ON_LEAVE, false)
+
+    fun setDropOnLeave(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean(KEY_DROP_ON_LEAVE, on).apply()
+
+    /** Fires the change listeners without changing a real setting (after a permission comes back). */
+    fun touch(context: Context) = prefs(context).edit().putLong(KEY_TOUCH, System.nanoTime()).apply()
 }
