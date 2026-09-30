@@ -104,20 +104,23 @@ class CheckActivity : Activity() {
     }
 
     private fun collect(): List<Item> = buildList {
-        val target = Prefs.target(this@CheckActivity)
+        val ticked = Prefs.checked(this@CheckActivity)
+        val missing = ticked.filterNot { installed(it) }
         add(
             when {
-                target == null -> Item(Level.BAD, getString(R.string.check_target), getString(R.string.check_target_none)) {
+                ticked.isEmpty() -> Item(Level.BAD, getString(R.string.check_target), getString(R.string.check_target_none)) {
                     finish()
                 }
-                !installed(target) -> Item(Level.BAD, getString(R.string.check_target), getString(R.string.target_missing)) {
-                    finish()
-                }
-                // The report is pasted into public bug reports, so it says that an app is
-                // chosen, never which one.
+                missing.isNotEmpty() -> Item(
+                    Level.WARN, getString(R.string.check_target),
+                    getString(R.string.check_target_missing, missing.joinToString(", ")),
+                    report = getString(R.string.check_target_report_missing, ticked.size, missing.size),
+                ) { finish() }
+                // The report is pasted into public bug reports, so it gives counts, never
+                // which apps.
                 else -> Item(
-                    Level.OK, getString(R.string.check_target), Prefs.label(this@CheckActivity, target),
-                    report = getString(R.string.check_target_report),
+                    Level.OK, getString(R.string.check_target), Prefs.checkedLabels(this@CheckActivity),
+                    report = getString(R.string.check_target_report_n, ticked.size),
                 )
             }
         )

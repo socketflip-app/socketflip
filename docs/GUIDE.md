@@ -48,7 +48,7 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 ## 4. First run
 
 1. Open **SocketFlip**.
-2. Tap **Choose target app** and pick the app you want to reconnect.
+2. Tap **Add target app** and pick the app you want to reconnect.
 3. Tap **Show floating button**. SocketFlip now asks for three things, one at a
    time (four on Samsung, Xiaomi, OnePlus and similar phones, and one more note if
    another VPN is on). After each one, come back to SocketFlip and tap **Show floating button**
@@ -96,9 +96,9 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 Two settings follow which app is on screen. Both need **Usage access**, which
 SocketFlip asks for when you turn one on:
 
-- **Only show the button while the target app is on screen** hides the button
+- **Only show the button while a ticked app is on screen** hides the button
   everywhere else. The notification stays, so you can still stop it.
-- **Take the tunnel down when I leave the target app** removes the VPN key as soon
+- **Take the tunnel down when I leave the ticked apps** removes the VPN key as soon
   as you switch away, so it does not linger or keep another VPN off.
 
 ### Making it your own
@@ -115,6 +115,14 @@ default** undoes everything.
 - **Quick Settings tile**: pull down the notification shade twice, tap the
   pencil (edit) icon, and drag the **SocketFlip** tile into your tiles.
 - **Notification**: tap **Flip now** on SocketFlip's notification.
+
+### More than one app
+
+Add as many apps as you like with **Add target app**. Every **ticked** app is
+reconnected by each tap, all at once; untick one to leave it alone without
+removing it. Each app has a **Cooldown** button, to give it its own cooldown, and
+a **Remove** button. With several apps ticked, the longest of their cooldowns
+applies.
 
 ### Turning it off
 

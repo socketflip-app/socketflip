@@ -18,6 +18,11 @@ ship. Ideas and requests are welcome in the
       button to fix each one and a "copy report" button for bug reports (1.6)
 - [x] Ask to be exempted from battery optimisation on phones known to close
       background apps (Samsung, Xiaomi, OnePlus and others) (1.6)
+- [x] Opening SocketFlip never switches off your other VPN app (per-app VPNs
+      included), and an Always-on VPN is explained with a button to Android's
+      VPN settings (1.6)
+- [x] No extra disconnect when your Wi-Fi renews its address and lists the same
+      DNS servers in a different order (1.10)
 - [x] Settings page (1.7)
 - [x] Adjustable cooldown between taps (1.7)
 - [x] Vibration and hint messages can be turned off (1.7)
@@ -31,22 +36,23 @@ ship. Ideas and requests are welcome in the
       Usage Access) (1.9)
 - [x] Take the tunnel down when you leave the target apps, so the VPN key does not
       linger (1.9)
+- [x] More than one target app: tick as many as you like and each tap reconnects
+      all of them (1.10)
+- [x] Each target app can have its own cooldown, with Cooldown and Remove buttons
+      right in the list (1.10)
 
 ## Later
 
-- [ ] More than one target app: tick as many as you like and each tap reconnects
-      all of them
-- [ ] Each target app can have its own cooldown, with Cooldown and Remove buttons
-      right in the list
 - [ ] Let automation apps (Tasker, MacroDroid, Key Mapper) trigger a flip, off by
-      default
-- [ ] Home screen shortcuts
+      default and only with a private code from Settings, so no other app can
+- [ ] Flip now, Show button and Hide button shortcuts on the SocketFlip icon
 - [ ] A cleaner look: the main screen and Settings laid out in cards
 - [ ] Skins: a row of ready-made looks for the button, one tap to use
 - [ ] Option to mirror the arrow so it turns the other way
 - [ ] Optional emergency restart: a red ! during the cooldown restarts a stuck app,
-      after asking
-- [ ] Home screen shortcut that shows the button and opens your app in one tap
+      after asking, and brings it back by itself
+- [ ] Home screen shortcut that shows the button and opens your app in one tap,
+      with the app's own icon at full size
 - [ ] An easier first run: numbered steps that carry on by themselves, and a plain
       explanation before Android's VPN warning
 - [ ] App picker with icons, search, and games listed first
@@ -58,20 +64,24 @@ ship. Ideas and requests are welcome in the
       Share button (counted on the phone only)
 - [ ] A note in the app when your copy is more than 30 days old
 - [ ] A quicker emergency restart question: two big buttons, Restart and Cancel
+- [ ] Press and hold only moves the button: it never counts as a tap
 - [ ] Clear "not yet" feedback for a tap the cooldown ignores
 - [ ] Settings kept in your phone's own backup, so a reinstall or a new phone keeps
       your setup
 - [ ] Setup check row for the Xiaomi, Redmi and POCO permission emergency restart needs
+- [ ] Less battery use: following the app on screen pauses while the screen is off
+- [ ] Automatic tests for the core logic, checked before every release
 - [ ] Accessibility: TalkBack names and values for every setting and for the
       button's state, and text that is easier to read in light mode
 - [ ] Settings lead with the cooldown; resetting the look can be undone
-- [ ] A 48 dp touch area around small buttons, and layouts that fit large text,
-      tablets and landscape
+- [ ] A bigger touch area around a small floating button, a colour picker that
+      works from black, and layouts that fit large text, tablets and landscape
 - [ ] Ready for translators: every piece of text in one file, and setup check
       reports that stay in English
 - [ ] Built with current Android tools, targets Android 16
+- [ ] Targets Android 17
 - [ ] Translations, first German, Brazilian Portuguese, Spanish, French and
-      Russian (help welcome: the text is all in one strings file)
+      Russian (help welcome)
 - [ ] Reproducible builds, so anyone can check the APK matches the source
 
 ## Not planned

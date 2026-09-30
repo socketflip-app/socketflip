@@ -20,6 +20,9 @@ object Prefs {
     private const val KEY_ONLY_OVER_TARGET = "only_over_target"
     private const val KEY_DROP_ON_LEAVE = "drop_on_leave"
     private const val KEY_TOUCH = "touch"
+    private const val KEY_TARGETS = "targets"
+    private const val KEY_CHECKED = "checked"
+    private const val KEY_TARGET_COOLDOWN = "cooldown_s:"
     private const val KEY_DOWN = "look_down"
     private const val KEY_UP = "look_up"
     private const val KEY_RING = "look_ring"
@@ -52,10 +55,63 @@ object Prefs {
 
     private fun prefs(context: Context) = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
-    fun target(context: Context): String? = prefs(context).getString(KEY_TARGET, null)
+    /** The active target: the app the next flip applies to. */
+    /** Every app the user has added, in the order added. Versions before 1.10 kept only one. */
+    fun targets(context: Context): List<String> {
+        val stored = prefs(context).getString(KEY_TARGETS, null)?.split("\n")?.filter { it.isNotEmpty() }
+        return stored ?: listOfNotNull(prefs(context).getString(KEY_TARGET, null))
+    }
 
-    fun setTarget(context: Context, pkg: String) =
-        prefs(context).edit().putString(KEY_TARGET, pkg).apply()
+    /** The ticked apps: every tap reconnects all of these at once. */
+    fun checked(context: Context): List<String> {
+        val stored = prefs(context).getString(KEY_CHECKED, null)?.split("\n")?.filter { it.isNotEmpty() }
+        val all = targets(context)
+        return (stored ?: all).filter { it in all }
+    }
+
+    fun setChecked(context: Context, pkg: String, on: Boolean) {
+        val now = checked(context).toMutableList()
+        if (on && pkg !in now) now += pkg
+        if (!on) now -= pkg
+        prefs(context).edit().putString(KEY_CHECKED, now.joinToString("\n")).apply()
+    }
+
+    /** Adds [pkg] to the list, ticked. */
+    fun addTarget(context: Context, pkg: String) {
+        val list = targets(context)
+        if (pkg in list) return setChecked(context, pkg, true)
+        val ticked = checked(context) + pkg
+        prefs(context).edit()
+            .putString(KEY_TARGETS, (list + pkg).joinToString("\n"))
+            .putString(KEY_CHECKED, ticked.joinToString("\n"))
+            .apply()
+    }
+
+    fun removeTarget(context: Context, pkg: String) {
+        val list = targets(context) - pkg
+        val ticked = checked(context) - pkg
+        prefs(context).edit()
+            .putString(KEY_TARGETS, list.joinToString("\n"))
+            .putString(KEY_CHECKED, ticked.joinToString("\n"))
+            .remove(KEY_TARGET_COOLDOWN + pkg)
+            .apply()
+    }
+
+    /** The ticked apps' names, for messages and the notification. */
+    fun checkedLabels(context: Context): String = checked(context).joinToString(", ") { label(context, it) }
+
+    /** A cooldown just for [pkg], or null to use the one from Settings. */
+    fun targetCooldownSeconds(context: Context, pkg: String): Int? {
+        val s = prefs(context).getInt(KEY_TARGET_COOLDOWN + pkg, 0)
+        return if (s == 0) null else s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)
+    }
+
+    fun setTargetCooldownSeconds(context: Context, pkg: String, s: Int?) {
+        val edit = prefs(context).edit()
+        if (s == null) edit.remove(KEY_TARGET_COOLDOWN + pkg)
+        else edit.putInt(KEY_TARGET_COOLDOWN + pkg, s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S))
+        edit.apply()
+    }
 
     fun label(context: Context, pkg: String): String = try {
         val pm = context.packageManager
@@ -93,7 +149,16 @@ object Prefs {
     fun cooldownSeconds(context: Context): Int =
         prefs(context).getInt(KEY_COOLDOWN, COOLDOWN_DEFAULT_S).coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)
 
-    fun cooldownMs(context: Context): Long = cooldownSeconds(context) * 1000L
+    /**
+     * The cooldown that applies right now: the longest among the ticked apps, each
+     * using its own cooldown or the one from Settings. The slowest app to reconnect
+     * sets the pace, since every tap reconnects all of them.
+     */
+    fun cooldownMs(context: Context): Long {
+        val global = cooldownSeconds(context)
+        val longest = checked(context).maxOfOrNull { targetCooldownSeconds(context, it) ?: global } ?: global
+        return longest * 1000L
+    }
 
     fun setCooldownSeconds(context: Context, s: Int) =
         prefs(context).edit().putInt(KEY_COOLDOWN, s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)).apply()

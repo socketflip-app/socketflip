@@ -13,11 +13,13 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.provider.Settings
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.view.WindowInsets
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -32,7 +34,7 @@ class MainActivity : Activity() {
         private const val UNSEEN_CANCEL_MS = 500L
     }
 
-    private lateinit var targetButton: Button
+    private lateinit var targetList: LinearLayout
     private lateinit var status: TextView
     private lateinit var tipCard: LinearLayout
     private lateinit var tipDone: TextView
@@ -54,8 +56,17 @@ class MainActivity : Activity() {
             text = getString(R.string.intro)
             setPadding(0, dp(12), 0, dp(24))
         })
-        targetButton = button { pickTarget() }
-        column.addView(targetButton)
+        column.addView(TextView(this).apply {
+            text = getString(R.string.targets_title)
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
+        })
+        targetList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        column.addView(targetList)
+        column.addView(button(getString(R.string.targets_add)) { pickTarget() })
+        column.addView(TextView(this).apply {
+            text = getString(R.string.targets_help)
+            setPadding(0, dp(4), 0, dp(16))
+        })
         column.addView(button(getString(R.string.show_button)) { start() })
         column.addView(button(getString(R.string.hide_button)) { stop() })
         status = TextView(this).apply { setPadding(0, dp(24), 0, 0) }
@@ -129,14 +140,14 @@ class MainActivity : Activity() {
     }
 
     private fun refresh() {
-        val target = Prefs.target(this)
-        targetButton.text = if (target == null) getString(R.string.no_target)
-        else getString(R.string.choose_target, Prefs.label(this, target))
+        val ticked = Prefs.checked(this)
+        targetList.removeAllViews()
+        Prefs.targets(this).forEach { targetList.addView(targetRow(it, it in ticked)) }
         status.text = getString(if (OverlayService.running) R.string.running else R.string.stopped)
         val flips = Prefs.flips(this)
         val prompt = flips >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
         tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
-        if (prompt) tipDone.text = tipDoneText(target, flips)
+        if (prompt) tipDone.text = tipDoneText(ticked.singleOrNull(), flips)
     }
 
     /** What SocketFlip has done so far, in the user's own numbers. */
@@ -169,8 +180,12 @@ class MainActivity : Activity() {
 
     /** Walks the user through each missing permission, then shows the button. */
     private fun start() {
-        if (Prefs.target(this) == null) {
+        if (Prefs.targets(this).isEmpty()) {
             pickTarget()
+            return
+        }
+        if (Prefs.checked(this).isEmpty()) {
+            status.text = getString(R.string.target_unset)
             return
         }
         if (!Settings.canDrawOverlays(this)) {
@@ -231,20 +246,85 @@ class MainActivity : Activity() {
         status.text = getString(R.string.stopped)
     }
 
+    /**
+     * One row per target: a checkbox (every ticked app is reconnected by each tap),
+     * its cooldown, and plain Cooldown and Remove buttons.
+     */
+    private fun targetRow(pkg: String, ticked: Boolean): LinearLayout = LinearLayout(this).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        val name = Prefs.label(this@MainActivity, pkg)
+        val own = Prefs.targetCooldownSeconds(this@MainActivity, pkg)
+        val cooldown = if (own == null) getString(R.string.target_cooldown_line_default, Prefs.cooldownSeconds(context))
+        else getString(R.string.target_cooldown_line, own)
+        addView(CheckBox(context).apply {
+            text = getString(R.string.target_row, name, cooldown)
+            isChecked = ticked
+            setOnCheckedChangeListener { _, on -> setTicked(pkg, on) }
+        }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        addView(small(getString(R.string.target_cooldown_button)) { targetCooldown(pkg, name) })
+        addView(small(getString(R.string.target_remove)) { confirmRemove(pkg, name) })
+    }
+
+    private fun small(label: String, onClick: () -> Unit) =
+        Button(this, null, android.R.attr.borderlessButtonStyle).apply {
+            text = label
+            minWidth = 0
+            minimumWidth = 0
+            setPadding(dp(8), 0, dp(8), 0)
+            setOnClickListener { onClick() }
+        }
+
+    private fun setTicked(pkg: String, on: Boolean) {
+        // A running tunnel covers the old set of apps; drop it so the next tap uses the new one.
+        if (FlipVpnService.isUp) FlipVpnService.stop(this)
+        Prefs.setChecked(this, pkg, on)
+        refresh()
+    }
+
+    private fun confirmRemove(pkg: String, name: String) {
+        AlertDialog.Builder(this)
+            .setMessage(getString(R.string.target_remove_confirm, name))
+            .setPositiveButton(R.string.target_remove) { _, _ ->
+                if (pkg in Prefs.checked(this) && FlipVpnService.isUp) FlipVpnService.stop(this)
+                Prefs.removeTarget(this, pkg)
+                refresh()
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /** Per-app cooldown: the Settings value, or one of a few fixed choices. */
+    private fun targetCooldown(pkg: String, name: String) {
+        val choices = listOf<Int?>(null, 3, 5, 10, 15, 20, 30, 45, 60)
+        val labels = choices.map {
+            if (it == null) getString(R.string.target_cooldown_default) else getString(R.string.target_cooldown_value, it)
+        }
+        val current = choices.indexOf(Prefs.targetCooldownSeconds(this, pkg)).coerceAtLeast(0)
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.target_cooldown) + ": " + name)
+            .setSingleChoiceItems(labels.toTypedArray(), current) { dialog, which ->
+                Prefs.setTargetCooldownSeconds(this, pkg, choices[which])
+                dialog.dismiss()
+                refresh()
+            }
+            .show()
+    }
+
     private fun pickTarget() {
         val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        val existing = Prefs.targets(this)
         val apps = packageManager.queryIntentActivities(launcher, 0)
             .map { it.activityInfo.packageName }
-            .filter { it != packageName }
+            .filter { it != packageName && it !in existing }
             .distinct()
             .map { it to Prefs.label(this, it) }
             .sortedBy { it.second.lowercase() }
         AlertDialog.Builder(this)
-            .setTitle(R.string.no_target)
+            .setTitle(R.string.targets_add)
             .setItems(apps.map { it.second }.toTypedArray()) { _, i ->
-                // A running tunnel still covers the old target; drop it first.
                 if (FlipVpnService.isUp) FlipVpnService.stop(this)
-                Prefs.setTarget(this, apps[i].first)
+                Prefs.addTarget(this, apps[i].first)
                 refresh()
             }
             .show()

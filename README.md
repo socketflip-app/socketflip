@@ -15,7 +15,7 @@ Follow the [2-minute guide](docs/GUIDE.md).
 
 1. [Download the APK](https://github.com/socketflip-app/socketflip/releases/latest),
    install it and open SocketFlip.
-2. Tap **Target app** and choose the app.
+2. Tap **Add target app** and choose the app. You can add more than one.
 3. Tap **Show floating button** and grant what it asks for: display over other
    apps, notifications, and the VPN connection request.
 4. Drag the button wherever it is out of the way. Tap it to reconnect.

@@ -87,7 +87,8 @@ Open SocketFlip and tap **Check setup** first: it shows every permission and
 setting SocketFlip needs, with a **Fix** button next to anything wrong. If that is
 all green, work down this list:
 
-1. **Wrong target app.** Open SocketFlip and check the **Target app** line.
+1. **Wrong target app.** Open SocketFlip and check that the app is ticked in the
+   **Target apps** list. Every ticked app is reconnected by each tap.
 2. **Tapped too soon.** Taps before the cooldown ring has run out are ignored. A
    short message says "Still reconnecting" when this happens (unless hint
    messages are turned off in Settings).

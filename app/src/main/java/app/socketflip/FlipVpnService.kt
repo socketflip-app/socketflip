@@ -58,6 +58,14 @@ class FlipVpnService : VpnService() {
 
         val isUp: Boolean get() = tun != null
 
+        /**
+         * Same resolvers, ignoring order: a DHCP renew often lists the same servers
+         * in a different order, and that must not rebuild the tunnel (a rebuild is
+         * an extra disconnect for the target app). Pure, so the unit tests cover it.
+         */
+        fun sameDns(a: List<InetAddress>, b: List<InetAddress>): Boolean =
+            a.map { it.hostAddress }.toSet() == b.map { it.hostAddress }.toSet()
+
         /** Called on the main thread whenever the tunnel goes up or down. */
         val listeners = CopyOnWriteArraySet<() -> Unit>()
 
@@ -160,16 +168,11 @@ class FlipVpnService : VpnService() {
     }
 
     private fun up() {
-        // Check the target first: prepare() below is not a harmless question, it takes
+        // Check the targets first: prepare() below is not a harmless question, it takes
         // the VPN slot from any other VPN app, so never call it for a flip that cannot work.
-        val target = Prefs.target(this) ?: run {
-            toast(getString(R.string.target_unset))
-            return
-        }
-        try {
-            packageManager.getApplicationInfo(target, 0)
-        } catch (e: PackageManager.NameNotFoundException) {
-            toast(getString(R.string.target_missing))
+        val targets = Prefs.checked(this).filter { installed(it) }
+        if (targets.isEmpty()) {
+            toast(getString(if (Prefs.checked(this).isEmpty()) R.string.target_unset else R.string.target_missing))
             return
         }
         if (prepare(this) != null) {
@@ -179,18 +182,21 @@ class FlipVpnService : VpnService() {
             return
         }
         val dns = dnsServers()
-        tun = try {
-            establish(target, dns)
-        } catch (e: PackageManager.NameNotFoundException) {
-            toast(getString(R.string.target_missing))
-            return
-        }
-        Log.i(TAG, "tunnel up for $target: ${tun != null}")
+        tun = establish(targets, dns)
+        Log.i(TAG, "tunnel up for $targets: ${tun != null}")
         // null means the system refused, most often because another app holds Always-on.
-        if (tun == null) toast(getString(R.string.tunnel_failed)) else watchNetwork(target, dns)
+        if (tun == null) toast(getString(R.string.tunnel_failed)) else watchNetwork(targets, dns)
     }
 
-    private fun establish(target: String, dns: List<InetAddress>): ParcelFileDescriptor? {
+    private fun installed(pkg: String): Boolean = try {
+        packageManager.getApplicationInfo(pkg, 0)
+        true
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
+    }
+
+    /** One tunnel covering every ticked app, so one state change reconnects them all. */
+    private fun establish(targets: List<String>, dns: List<InetAddress>): ParcelFileDescriptor? {
         val builder = Builder()
             .setSession(getString(R.string.app_name))
             .addAddress(TUN_ADDRESS, 32)
@@ -198,7 +204,7 @@ class FlipVpnService : VpnService() {
             .setMtu(1280)
             .setBlocking(false)
             .setMetered(false)
-            .addAllowedApplication(target)
+        targets.forEach { builder.addAllowedApplication(it) }
         dns.forEach { builder.addDnsServer(it) }
         return builder.establish()
     }
@@ -214,18 +220,18 @@ class FlipVpnService : VpnService() {
      * reconnect cannot succeed until DNS works, so the rebuild costs no extra
      * disconnect that matters.
      */
-    private fun watchNetwork(target: String, initial: List<InetAddress>) {
+    private fun watchNetwork(targets: List<String>, initial: List<InetAddress>) {
         unwatchNetwork()
         var current = initial
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
                 if (tun == null) return
                 val fresh = usableDns(lp.dnsServers).ifEmpty { fallbackDns() }
-                if (fresh == current) return
+                if (sameDns(fresh, current)) return
                 Log.i(TAG, "network DNS changed, rebuilding tunnel")
                 try {
                     val old = tun
-                    val replacement = establish(target, fresh) ?: return
+                    val replacement = establish(targets, fresh) ?: return
                     tun = replacement
                     current = fresh
                     try {

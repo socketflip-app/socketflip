@@ -50,7 +50,9 @@ class OverlayService : Service() {
     private val settingsChanged = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         applyLook()
         updateWatcher()
+        updateNotification()
     }
+    private var notifiedTarget: String? = null
 
     private var watcher: ForegroundWatcher? = null
     private var foreground: String? = null
@@ -102,6 +104,21 @@ class OverlayService : Service() {
         nm.createNotificationChannel(
             NotificationChannel(CHANNEL, getString(R.string.channel_name), NotificationManager.IMPORTANCE_LOW)
         )
+        val notification = buildNotification()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    /** Keeps the notification naming the active target when it changes. */
+    private fun updateNotification() {
+        if (Prefs.checkedLabels(this) == notifiedTarget) return
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification())
+    }
+
+    private fun buildNotification(): Notification {
         val flags = PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         val flip = PendingIntent.getService(
             this, 1, Intent(this, FlipVpnService::class.java).setAction(FlipVpnService.ACTION_FLIP), flags
@@ -110,8 +127,9 @@ class OverlayService : Service() {
             this, 2, Intent(this, OverlayService::class.java).setAction(ACTION_STOP), flags
         )
         val open = PendingIntent.getActivity(this, 3, Intent(this, MainActivity::class.java), flags)
-        val target = Prefs.target(this)?.let { Prefs.label(this, it) } ?: ""
-        val notification = Notification.Builder(this, CHANNEL)
+        notifiedTarget = Prefs.checkedLabels(this)
+        val target = notifiedTarget ?: ""
+        return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_flip)
             .setContentTitle(getString(R.string.app_name))
             .setContentText(getString(R.string.notif_text, target))
@@ -120,11 +138,6 @@ class OverlayService : Service() {
             .addAction(Notification.Action.Builder(null, getString(R.string.action_flip), flip).build())
             .addAction(Notification.Action.Builder(null, getString(R.string.action_stop), stop).build())
             .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
-        }
     }
 
     private fun addButton() {
@@ -253,7 +266,7 @@ class OverlayService : Service() {
         handler.postDelayed(dropIfLeft, if (pkg == homePackage) 0L else LEAVE_CONFIRM_MS)
     }
 
-    private fun isTarget(pkg: String?) = pkg != null && pkg == Prefs.target(this)
+    private fun isTarget(pkg: String?) = pkg != null && pkg in Prefs.checked(this)
 
     /** The home screen app, which is always a real "left the target". */
     private val homePackage: String? by lazy {
@@ -283,7 +296,7 @@ class OverlayService : Service() {
     private fun shouldShow(): Boolean {
         if (watcher == null || !Prefs.onlyOverTarget(this)) return true
         val fg = foreground ?: return true
-        return fg == Prefs.target(this) || fg == packageName
+        return fg in Prefs.checked(this) || fg == packageName
     }
 
     /**
