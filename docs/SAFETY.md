@@ -105,6 +105,14 @@ this permission is never used.
 ### VPN (the connection request)
 Explained in full in the next section.
 
+### Automation, off by default
+Not a permission, but it answers "what can other apps make SocketFlip do?".
+SocketFlip can take a flip or stop request from an automation app such as Tasker,
+MacroDroid or Key Mapper. That is **off** until you switch it on in Settings, and
+even then a request only counts if it carries a random code that SocketFlip made
+for your phone and shows you in Settings. Any other app's request is ignored. It
+can only do what a tap on the button does, with the same cooldown.
+
 ### What SocketFlip does **not** have
 - **No internet permission.** Android will not let SocketFlip open a single
   connection of its own. It cannot upload, report or "phone home", even if it

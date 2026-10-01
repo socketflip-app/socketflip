@@ -40,17 +40,17 @@ ship. Ideas and requests are welcome in the
       all of them (1.10)
 - [x] Each target app can have its own cooldown, with Cooldown and Remove buttons
       right in the list (1.10)
+- [x] Let automation apps (Tasker, MacroDroid, Key Mapper) trigger a flip, off by
+      default and only with a private code from Settings, so no other app can (1.11)
+- [x] Flip now, Show button and Hide button shortcuts on the SocketFlip icon (1.11)
+- [x] A cleaner look: the main screen and Settings laid out in cards (1.11)
+- [x] Skins: a row of ready-made looks for the button, one tap to use (1.11)
+- [x] Option to mirror the arrow so it turns the other way (1.11)
+- [x] Optional emergency restart: a red ! during the cooldown restarts a stuck app,
+      after asking, and brings it back by itself (1.11)
 
 ## Later
 
-- [ ] Let automation apps (Tasker, MacroDroid, Key Mapper) trigger a flip, off by
-      default and only with a private code from Settings, so no other app can
-- [ ] Flip now, Show button and Hide button shortcuts on the SocketFlip icon
-- [ ] A cleaner look: the main screen and Settings laid out in cards
-- [ ] Skins: a row of ready-made looks for the button, one tap to use
-- [ ] Option to mirror the arrow so it turns the other way
-- [ ] Optional emergency restart: a red ! during the cooldown restarts a stuck app,
-      after asking, and brings it back by itself
 - [ ] Home screen shortcut that shows the button and opens your app in one tap,
       with the app's own icon at full size
 - [ ] An easier first run: numbered steps that carry on by themselves, and a plain

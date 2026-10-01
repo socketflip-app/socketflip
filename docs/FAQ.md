@@ -132,6 +132,14 @@ or more. If it keeps happening with one particular app, please open an issue
 saying what kind of app it is (game, chat,
 browser...).
 
+If the app stays stuck and you would have to restart it anyway, turn on
+**Settings > Emergency restart**. While the cooldown runs, the button turns into a
+red **!**; tap it and SocketFlip asks whether to restart the app, then closes its
+screens and opens it again, and most games start fresh. If SocketFlip cannot ask,
+it restarts nothing. If an app survives that, **Open App info (Force stop)** opens
+its App info page with the Force stop button. (Android does not
+let one app force-stop another directly.)
+
 ### The floating button disappeared
 
 - After a **restart** of the phone: SocketFlip does not start itself. Open SocketFlip and

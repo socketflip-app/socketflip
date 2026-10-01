@@ -48,7 +48,30 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Home screen shortcuts land here: act, then close without showing anything. -->
+        <activity
+            android:name=".ShortcutActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- For automation apps. Does nothing unless the user turns it on in Settings. -->
+        <receiver
+            android:name=".AutomationReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="app.socketflip.FLIP" />
+                <action android:name="app.socketflip.STOP" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".SettingsActivity"

@@ -3,6 +3,7 @@ package app.socketflip
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import java.security.SecureRandom
 
 object Prefs {
     private const val FILE = "socketflip"
@@ -23,6 +24,9 @@ object Prefs {
     private const val KEY_TARGETS = "targets"
     private const val KEY_CHECKED = "checked"
     private const val KEY_TARGET_COOLDOWN = "cooldown_s:"
+    private const val KEY_AUTOMATION = "automation"
+    private const val KEY_EMERGENCY = "emergency_restart"
+    private const val KEY_AUTOMATION_TOKEN = "automation_token"
     private const val KEY_DOWN = "look_down"
     private const val KEY_UP = "look_up"
     private const val KEY_RING = "look_ring"
@@ -30,6 +34,7 @@ object Prefs {
     private const val KEY_IDLE_ALPHA = "look_idle_alpha"
     private const val KEY_PRESSED_ALPHA = "look_pressed_alpha"
     private const val KEY_SIZE = "look_size"
+    private const val KEY_MIRROR = "look_mirror"
 
     const val COOLDOWN_MIN_S = 3
     const val COOLDOWN_MAX_S = 60
@@ -189,6 +194,7 @@ object Prefs {
             idleAlpha = p.getFloat(KEY_IDLE_ALPHA, d.idleAlpha).coerceIn(Look.MIN_ALPHA, 1f),
             pressedAlpha = p.getFloat(KEY_PRESSED_ALPHA, d.pressedAlpha).coerceIn(Look.MIN_ALPHA, 1f),
             sizeDp = p.getInt(KEY_SIZE, d.sizeDp).coerceIn(Look.MIN_SIZE_DP, Look.MAX_SIZE_DP),
+            mirrorIcon = p.getBoolean(KEY_MIRROR, d.mirrorIcon),
         )
     }
 
@@ -200,6 +206,7 @@ object Prefs {
         .putFloat(KEY_IDLE_ALPHA, look.idleAlpha.coerceIn(Look.MIN_ALPHA, 1f))
         .putFloat(KEY_PRESSED_ALPHA, look.pressedAlpha.coerceIn(Look.MIN_ALPHA, 1f))
         .putInt(KEY_SIZE, look.sizeDp.coerceIn(Look.MIN_SIZE_DP, Look.MAX_SIZE_DP))
+        .putBoolean(KEY_MIRROR, look.mirrorIcon)
         .apply()
 
     /** Lets the floating button redraw as soon as a setting changes. */
@@ -223,4 +230,28 @@ object Prefs {
 
     /** Fires the change listeners without changing a real setting (after a permission comes back). */
     fun touch(context: Context) = prefs(context).edit().putLong(KEY_TOUCH, System.nanoTime()).apply()
+
+    /** Let other apps (Tasker, MacroDroid, Key Mapper) trigger a flip with a broadcast. */
+    fun automation(context: Context): Boolean = prefs(context).getBoolean(KEY_AUTOMATION, false)
+
+    fun setAutomation(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_AUTOMATION, on).apply()
+
+    /** During the cooldown the button becomes a red "!" that restarts the app (after asking). */
+    fun emergencyRestart(context: Context): Boolean = prefs(context).getBoolean(KEY_EMERGENCY, false)
+
+    fun setEmergencyRestart(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean(KEY_EMERGENCY, on).apply()
+
+    /**
+     * A random code, made once per install, that an automation broadcast must carry
+     * as the extra "token". Only the automation app the user pasted it into knows it.
+     */
+    fun automationToken(context: Context): String {
+        prefs(context).getString(KEY_AUTOMATION_TOKEN, null)?.let { return it }
+        val chars = "abcdefghijkmnpqrstuvwxyz23456789"
+        val random = SecureRandom()
+        val token = String(CharArray(16) { chars[random.nextInt(chars.length)] })
+        prefs(context).edit().putString(KEY_AUTOMATION_TOKEN, token).apply()
+        return token
+    }
 }

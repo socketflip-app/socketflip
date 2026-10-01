@@ -48,10 +48,10 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 ## 4. First run
 
 1. Open **SocketFlip**.
-2. Tap **Add target app** and pick the app you want to reconnect.
-3. Tap **Show floating button**. SocketFlip now asks for three things, one at a
-   time (four on Samsung, Xiaomi, OnePlus and similar phones, and one more note if
-   another VPN is on). After each one, come back to SocketFlip and tap **Show floating button**
+2. Tap **+ Add app** and pick the app you want to reconnect.
+3. Tap the big **Show floating button** button. SocketFlip now asks for three
+   things, one at a time (four on Samsung, Xiaomi, OnePlus and similar phones, and
+   one more note if another VPN is on). After each one, come back to SocketFlip and tap it
    again until the button appears.
 
    - **Display over other apps**: Android opens a settings page. Turn SocketFlip
@@ -91,6 +91,13 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
   after the next. That is normal: every tap switches SocketFlip's tunnel on or off,
   and both directions cause the reconnect.
 
+### Emergency restart (optional)
+
+Very occasionally an app stays stuck on its reconnecting screen and needs a
+restart. Turn on **Settings > Emergency restart**: while the cooldown runs, the
+button turns into a red **!**, and tapping it asks whether to restart the app. It
+always asks first, so a stray tap never restarts anything.
+
 ### Following the target app (optional)
 
 Two settings follow which app is on screen. Both need **Usage access**, which
@@ -103,22 +110,34 @@ SocketFlip asks for when you turn one on:
 
 ### Making it your own
 
-**Settings > Appearance** has a colour picker for the button (tunnel down and
-tunnel up), the cooldown ring and the icon, plus sliders for size and for
-opacity, both while resting and just after a tap. A preview at the top shows
-every state as you change things. **Default**, **Subtle** and **High contrast**
-presets are there if you just want a quick change, and **Reset appearance to
-default** undoes everything.
+Open **Settings**. At the top, a preview shows the button in every state as you
+change things.
+
+- **Skins** is a row of ready-made looks. Swipe along it and tap one to use it.
+- **Customise** has a colour picker for the button (tunnel down and tunnel up),
+  the cooldown ring and the icon, a switch to mirror the arrow so it turns the
+  other way, and sliders for size and for opacity, both while resting and just
+  after a tap.
+- **Reset appearance to default** undoes everything.
 
 ### Other ways to trigger it
 
 - **Quick Settings tile**: pull down the notification shade twice, tap the
   pencil (edit) icon, and drag the **SocketFlip** tile into your tiles.
 - **Notification**: tap **Flip now** on SocketFlip's notification.
+- **Home screen**: long-press the SocketFlip icon for **Flip now**, **Show
+  button** and **Hide button**. Drag one out to make it an icon of its own.
+- **Automation apps** (Tasker, MacroDroid, Key Mapper and similar): turn on
+  **Settings > Let other apps trigger a flip**, tap **Copy code** under it, then
+  have the app send a broadcast with action `app.socketflip.FLIP` (or
+  `app.socketflip.STOP` to take the tunnel down) to package `app.socketflip`, with a
+  string extra named `token` set to that code. Broadcasts without the right code
+  are ignored, so other apps cannot trigger it. The floating button must be
+  switched on. Key Mapper can use this to flip on a volume button press.
 
 ### More than one app
 
-Add as many apps as you like with **Add target app**. Every **ticked** app is
+Add as many apps as you like with **+ Add app**. Every **ticked** app is
 reconnected by each tap, all at once; untick one to leave it alone without
 removing it. Each app has a **Cooldown** button, to give it its own cooldown, and
 a **Remove** button. With several apps ticked, the longest of their cooldowns

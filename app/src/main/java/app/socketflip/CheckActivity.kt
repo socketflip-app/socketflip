@@ -3,6 +3,7 @@ package app.socketflip
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.graphics.Typeface
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -17,8 +18,6 @@ import android.provider.Settings
 import android.util.TypedValue
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import android.view.WindowInsets
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -58,41 +57,19 @@ class CheckActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val pad = dp(24)
+        val ui = Ui(this)
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad)
+            setPadding(dp(16), dp(24), dp(16), dp(24))
         }
-        column.addView(TextView(this).apply {
-            text = getString(R.string.check_title)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 24f)
-        })
-        column.addView(TextView(this).apply {
-            text = getString(R.string.check_intro)
-            setPadding(0, dp(8), 0, dp(16))
-        })
-        list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        column.addView(ui.title(getString(R.string.check_title)))
+        column.addView(ui.caption(getString(R.string.check_intro)).apply { setPadding(dp(4), dp(4), dp(4), dp(16)) })
+        list = ui.card()
         column.addView(list)
-        column.addView(Button(this).apply {
-            text = getString(R.string.check_copy)
-            setOnClickListener { copyReport() }
-        })
+        column.addView(ui.primaryButton(getString(R.string.check_copy)) { copyReport() })
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
-            setOnApplyWindowInsetsListener { v, insets ->
-                // getInsets() is Android 11+; the older getters still work on Android 10.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val bars = insets.getInsets(WindowInsets.Type.systemBars())
-                    v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-                } else {
-                    @Suppress("DEPRECATION")
-                    v.setPadding(
-                        insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
-                        insets.systemWindowInsetRight, insets.systemWindowInsetBottom
-                    )
-                }
-                insets
-            }
+            padForSystemBars()
         })
     }
 
@@ -228,13 +205,14 @@ class CheckActivity : Activity() {
             addView(TextView(context).apply {
                 text = item.title
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
+                setTextColor(Ui(context).primaryText)
             })
-            addView(TextView(context).apply { text = item.detail })
+            addView(TextView(context).apply {
+                text = item.detail
+                alpha = 0.75f
+            })
             item.fix?.let { fix ->
-                addView(Button(context).apply {
-                    text = getString(R.string.check_fix)
-                    setOnClickListener { fix() }
-                }, WRAP_CONTENT, WRAP_CONTENT)
+                addView(Ui(context).textButton(getString(R.string.check_fix)) { fix() }, WRAP_CONTENT, WRAP_CONTENT)
             }
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
     }

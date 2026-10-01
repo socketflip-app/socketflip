@@ -14,6 +14,8 @@ data class Look(
     val idleAlpha: Float,
     val pressedAlpha: Float,
     val sizeDp: Int,
+    /** Draw the arrow mirrored, so it turns anticlockwise. */
+    val mirrorIcon: Boolean = false,
 ) {
     /** True when the icon would be hard to see on either button colour. */
     val lowContrast: Boolean
@@ -37,28 +39,6 @@ data class Look(
             idleAlpha = 0.8f,
             pressedAlpha = 1f,
             sizeDp = 52,
-        )
-
-        /** Small and faint, for a button that stays out of the way until it is needed. */
-        val SUBTLE = Look(
-            downColor = 0xFF616161.toInt(),
-            upColor = 0xFF37474F.toInt(),
-            ringColor = 0xFFE0E0E0.toInt(),
-            iconColor = 0xFFFFFFFF.toInt(),
-            idleAlpha = 0.35f,
-            pressedAlpha = 0.9f,
-            sizeDp = 44,
-        )
-
-        /** Large, solid and easy to tell apart. */
-        val HIGH_CONTRAST = Look(
-            downColor = 0xFF000000.toInt(),
-            upColor = 0xFF4A148C.toInt(),
-            ringColor = 0xFFFFEB3B.toInt(),
-            iconColor = 0xFFFFEB3B.toInt(),
-            idleAlpha = 1f,
-            pressedAlpha = 1f,
-            sizeDp = 64,
         )
 
         /** WCAG contrast ratio between two colours, 1 (same) to 21 (black on white). */

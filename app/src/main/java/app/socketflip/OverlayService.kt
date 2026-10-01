@@ -3,6 +3,7 @@ package app.socketflip
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
+import android.app.AlertDialog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,6 +18,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -45,6 +47,8 @@ class OverlayService : Service() {
     private var button: FlipButtonView? = null
     private var params: WindowManager.LayoutParams? = null
     private val redraw: () -> Unit = { button?.invalidate() }
+    // An emergency restart keeps the button shown until the app is back (see Restart.busy).
+    private val restartChanged: () -> Unit = { setShown(shouldShow()) }
 
     // Held in a field: SharedPreferences only keeps a weak reference to listeners.
     private val settingsChanged = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
@@ -69,6 +73,7 @@ class OverlayService : Service() {
         startInForeground()
         addButton()
         FlipVpnService.listeners.add(redraw)
+        Restart.listeners.add(restartChanged)
         Prefs.listen(this, settingsChanged)
         updateWatcher()
     }
@@ -81,6 +86,7 @@ class OverlayService : Service() {
     override fun onDestroy() {
         running = false
         FlipVpnService.listeners.remove(redraw)
+        Restart.listeners.remove(restartChanged)
         Prefs.unlisten(this, settingsChanged)
         watcher?.stop()
         watcher = null
@@ -294,7 +300,7 @@ class OverlayService : Service() {
     }
 
     private fun shouldShow(): Boolean {
-        if (watcher == null || !Prefs.onlyOverTarget(this)) return true
+        if (watcher == null || !Prefs.onlyOverTarget(this) || Restart.busy) return true
         val fg = foreground ?: return true
         return fg in Prefs.checked(this) || fg == packageName
     }
@@ -366,7 +372,47 @@ class OverlayService : Service() {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM
             else HapticFeedbackConstants.VIRTUAL_KEY
         )
+        if (Prefs.emergencyRestart(this) && FlipVpnService.cooldownLeft(this) > 0f) {
+            confirmRestart()
+            return
+        }
         view.flash()
         FlipVpnService.flip(this)
+    }
+
+    /**
+     * Asks before restarting: a stray tap during the cooldown must never restart a
+     * game by itself. Drawn as an overlay dialog so the app underneath stays put.
+     */
+    private fun confirmRestart() {
+        val targets = Prefs.checked(this).filter { packageManager.getLaunchIntentForPackage(it) != null }
+        if (targets.isEmpty()) {
+            Toast.makeText(this, R.string.target_unset, Toast.LENGTH_SHORT).show()
+            return
+        }
+        // The app on screen, if Usage access says which; the only ticked app; or ask.
+        val choice = foreground?.takeIf { it in targets } ?: targets.singleOrNull()
+        val builder = AlertDialog.Builder(ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Dialog_Alert))
+            .setTitle(R.string.restart_title)
+            .setNegativeButton(android.R.string.cancel, null)
+        if (choice != null) {
+            val name = Prefs.label(this, choice)
+            builder.setMessage(getString(R.string.restart_text, name))
+                .setPositiveButton(R.string.restart_go) { _, _ -> Restart.restart(this, choice) }
+                .setNeutralButton(R.string.restart_force) { _, _ -> Restart.appInfo(this, choice) }
+        } else {
+            builder.setItems(targets.map { Prefs.label(this, it) }.toTypedArray()) { _, i ->
+                Restart.restart(this, targets[i])
+            }
+        }
+        val dialog = builder.create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
+        try {
+            dialog.show()
+        } catch (e: Exception) {
+            // Never crash over the target app, and never restart without asking: a
+            // restart can throw away a match in progress.
+            Toast.makeText(this, R.string.restart_cannot_ask, Toast.LENGTH_LONG).show()
+        }
     }
 }

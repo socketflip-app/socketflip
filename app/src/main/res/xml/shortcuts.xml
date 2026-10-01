@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the SocketFlip icon on the home screen, or drag these out as icons. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="flip"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_flip">
+        <intent
+            android:action="app.socketflip.shortcut.FLIP"
+            android:targetPackage="app.socketflip"
+            android:targetClass="app.socketflip.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="show"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_show">
+        <intent
+            android:action="app.socketflip.shortcut.SHOW"
+            android:targetPackage="app.socketflip"
+            android:targetClass="app.socketflip.ShortcutActivity" />
+    </shortcut>
+    <shortcut
+        android:shortcutId="hide"
+        android:enabled="true"
+        android:icon="@drawable/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_hide">
+        <intent
+            android:action="app.socketflip.shortcut.HIDE"
+            android:targetPackage="app.socketflip"
+            android:targetClass="app.socketflip.ShortcutActivity" />
+    </shortcut>
+</shortcuts>

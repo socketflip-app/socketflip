@@ -15,7 +15,7 @@ Follow the [2-minute guide](docs/GUIDE.md).
 
 1. [Download the APK](https://github.com/socketflip-app/socketflip/releases/latest),
    install it and open SocketFlip.
-2. Tap **Add target app** and choose the app. You can add more than one.
+2. Tap **+ Add app** and choose the app. You can add more than one.
 3. Tap **Show floating button** and grant what it asks for: display over other
    apps, notifications, and the VPN connection request.
 4. Drag the button wherever it is out of the way. Tap it to reconnect.
@@ -92,8 +92,10 @@ Full walkthrough, including Play Protect and permission prompts: **[docs/GUIDE.m
 Problems and questions: **[docs/FAQ.md](docs/FAQ.md)**.
 What is coming next: **[ROADMAP.md](ROADMAP.md)**.
 
-There is also a **SocketFlip** Quick Settings tile and a **Flip now** action on the
-notification, which do the same thing. Only one VPN can run on Android at a time,
+There is also a **SocketFlip** Quick Settings tile, a **Flip now** action on the
+notification and home screen shortcuts, which do the same thing. Automation apps
+such as Tasker can trigger a flip too, once you allow it in Settings (see the
+[guide](docs/GUIDE.md#other-ways-to-trigger-it)). Only one VPN can run on Android at a time,
 so SocketFlip will replace another VPN app's tunnel while its own is up.
 
 ## Automatic updates

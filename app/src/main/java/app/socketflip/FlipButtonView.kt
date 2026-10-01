@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.view.View
@@ -19,7 +20,7 @@ import android.view.View
 class FlipButtonView(context: Context) : View(context) {
 
     /** A fixed state for previews; null follows the real tunnel and cooldown. */
-    data class Preview(val up: Boolean, val ringFraction: Float, val pressed: Boolean = false)
+    data class Preview(val up: Boolean, val ringFraction: Float, val pressed: Boolean = false, val alarm: Boolean = false)
 
     var look: Look = Look.DEFAULT
         set(value) {
@@ -43,6 +44,11 @@ class FlipButtonView(context: Context) : View(context) {
         strokeCap = Paint.Cap.ROUND
     }
     private val arc = RectF()
+    private val bang = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = 0xFFFFFFFF.toInt()
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.DEFAULT_BOLD
+    }
 
     /** Briefly shows the "just tapped" opacity, as feedback that the tap landed. */
     fun flash() {
@@ -56,6 +62,8 @@ class FlipButtonView(context: Context) : View(context) {
         val up = p?.up ?: FlipVpnService.isUp
         val pressed = p?.pressed ?: (now < pressedUntil)
         val ringLeft = p?.ringFraction ?: FlipVpnService.cooldownLeft(context)
+        // Emergency restart: while the cooldown runs, a tap means "restart the app".
+        val alarm = p?.alarm ?: (ringLeft > 0f && Prefs.emergencyRestart(context))
 
         alpha = if (pressed) look.pressedAlpha else look.idleAlpha
 
@@ -63,12 +71,22 @@ class FlipButtonView(context: Context) : View(context) {
         val cx = width / 2f
         val cy = height / 2f
         val stroke = size * 0.09f
-        fill.color = if (up) look.upColor else look.downColor
+        fill.color = if (alarm) ALARM_COLOR else if (up) look.upColor else look.downColor
         canvas.drawCircle(cx, cy, size / 2f - stroke / 2f, fill)
 
         val iconHalf = (size * 0.27f).toInt()
         icon.setBounds(cx.toInt() - iconHalf, cy.toInt() - iconHalf, cx.toInt() + iconHalf, cy.toInt() + iconHalf)
-        icon.draw(canvas)
+        if (alarm) {
+            bang.textSize = size * 0.55f
+            canvas.drawText("!", cx, cy - (bang.descent() + bang.ascent()) / 2f, bang)
+        } else if (look.mirrorIcon) {
+            canvas.save()
+            canvas.scale(-1f, 1f, cx, cy)
+            icon.draw(canvas)
+            canvas.restore()
+        } else {
+            icon.draw(canvas)
+        }
 
         if (ringLeft > 0f) {
             ring.color = look.ringColor
@@ -84,5 +102,6 @@ class FlipButtonView(context: Context) : View(context) {
 
     companion object {
         private const val FLASH_MS = 600L
+        private const val ALARM_COLOR = 0xFFD32F2F.toInt()
     }
 }

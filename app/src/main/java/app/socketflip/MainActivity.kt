@@ -6,16 +6,20 @@ import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Typeface
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.RelativeSizeSpan
 import android.provider.Settings
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
-import android.view.WindowInsets
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
@@ -34,8 +38,10 @@ class MainActivity : Activity() {
         private const val UNSEEN_CANCEL_MS = 500L
     }
 
+    private lateinit var ui: Ui
     private lateinit var targetList: LinearLayout
     private lateinit var status: TextView
+    private lateinit var toggle: Button
     private lateinit var tipCard: LinearLayout
     private lateinit var tipDone: TextView
     private var askedNotify = false
@@ -43,91 +49,68 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val pad = dp(24)
+        ui = Ui(this)
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(pad, pad, pad, pad)
+            setPadding(dp(16), dp(24), dp(16), dp(24))
         }
-        column.addView(TextView(this).apply {
-            text = getString(R.string.app_name)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 28f)
-        })
-        column.addView(TextView(this).apply {
-            text = getString(R.string.intro)
-            setPadding(0, dp(12), 0, dp(24))
-        })
-        column.addView(TextView(this).apply {
-            text = getString(R.string.targets_title)
-            setTextSize(TypedValue.COMPLEX_UNIT_SP, 18f)
-        })
-        targetList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        column.addView(targetList)
-        column.addView(button(getString(R.string.targets_add)) { pickTarget() })
-        column.addView(TextView(this).apply {
-            text = getString(R.string.targets_help)
-            setPadding(0, dp(4), 0, dp(16))
-        })
-        column.addView(button(getString(R.string.show_button)) { start() })
-        column.addView(button(getString(R.string.hide_button)) { stop() })
-        status = TextView(this).apply { setPadding(0, dp(24), 0, 0) }
+
+        column.addView(ui.title(getString(R.string.app_name)))
+        column.addView(ui.caption(getString(R.string.intro_short)).apply { setPadding(dp(4), dp(4), dp(4), dp(4)) })
+        status = TextView(this).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setPadding(dp(4), dp(4), dp(4), dp(16))
+        }
         column.addView(status)
-        column.addView(button(getString(R.string.settings)) {
-            startActivity(Intent(this, SettingsActivity::class.java))
-        })
-        column.addView(button(getString(R.string.check_setup)) {
-            startActivity(Intent(this, CheckActivity::class.java))
+
+        column.addView(ui.card().apply {
+            addView(ui.sectionTitle(getString(R.string.targets_title)))
+            targetList = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
+            addView(targetList)
+            addView(ui.caption(getString(R.string.targets_help)))
+            addView(ui.textButton(getString(R.string.targets_add_plus)) { pickTarget() }, WRAP_CONTENT, WRAP_CONTENT)
         })
 
+        toggle = ui.primaryButton("") { if (OverlayService.running) stop() else start() }
+        column.addView(toggle)
+        column.addView(ui.row(
+            ui.textButton(getString(R.string.settings)) { startActivity(Intent(this, SettingsActivity::class.java)) },
+            ui.textButton(getString(R.string.check_setup)) { startActivity(Intent(this, CheckActivity::class.java)) },
+        ).apply { setPadding(0, 0, 0, dp(12)) })
+
         // Shown once, after the app has proved useful; "Not now" hides it for good.
-        tipCard = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(0, dp(32), 0, 0)
+        tipCard = ui.card().apply {
+            addView(ui.sectionTitle(getString(R.string.tip_title)))
             // Filled in by refresh(): a concrete number says more than a generic ask.
-            tipDone = TextView(context).apply { setPadding(0, 0, 0, dp(12)) }
+            tipDone = TextView(context).apply { setPadding(0, 0, 0, dp(8)) }
             addView(tipDone)
-            addView(TextView(context).apply { text = getString(R.string.tip_prompt) })
-            addView(button(getString(R.string.tip_button)) { openTip() })
-            addView(button(getString(R.string.tip_not_now)) {
-                Prefs.dismissTip(this@MainActivity)
-                refresh()
-            })
+            addView(ui.caption(getString(R.string.tip_prompt)))
+            addView(ui.row(
+                ui.textButton(getString(R.string.tip_button)) { openTip() },
+                ui.textButton(getString(R.string.tip_not_now)) {
+                    Prefs.dismissTip(this@MainActivity)
+                    refresh()
+                },
+            ))
         }
         column.addView(tipCard)
 
-        column.addView(TextView(this).apply {
-            text = getString(R.string.tip_line)
-            setPadding(0, dp(32), 0, 0)
+        column.addView(ui.card().apply {
+            addView(ui.sectionTitle(getString(R.string.about_title)))
+            addView(ui.caption(getString(R.string.tip_line)))
+            addView(ui.caption(getString(R.string.version_line, installedVersion())))
+            addView(ui.caption(getString(R.string.licence_line)))
+            addView(ui.row(
+                ui.textButton(getString(R.string.tip_button)) { openTip() },
+                ui.textButton(getString(R.string.check_updates_short)) { openUrl(Prefs.RELEASES_URL) },
+                ui.textButton(getString(R.string.source_short)) { openUrl(Prefs.SOURCE_URL) },
+            ))
         })
-        column.addView(button(getString(R.string.tip_button)) { openTip() })
 
-        column.addView(TextView(this).apply {
-            text = getString(R.string.version_line, installedVersion())
-            setPadding(0, dp(32), 0, 0)
-        })
-        column.addView(button(getString(R.string.check_updates)) { openUrl(Prefs.RELEASES_URL) })
-
-        column.addView(TextView(this).apply {
-            text = getString(R.string.licence_line)
-            setPadding(0, dp(32), 0, 0)
-        })
-        column.addView(button(getString(R.string.source_code)) { openUrl(Prefs.SOURCE_URL) })
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             // Android 15+ draws edge to edge; keep content clear of the system bars.
-            setOnApplyWindowInsetsListener { v, insets ->
-                // getInsets() is Android 11+; the older getters still work on Android 10.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val bars = insets.getInsets(WindowInsets.Type.systemBars())
-                    v.setPadding(bars.left, bars.top, bars.right, bars.bottom)
-                } else {
-                    @Suppress("DEPRECATION")
-                    v.setPadding(
-                        insets.systemWindowInsetLeft, insets.systemWindowInsetTop,
-                        insets.systemWindowInsetRight, insets.systemWindowInsetBottom
-                    )
-                }
-                insets
-            }
+            padForSystemBars()
         })
     }
 
@@ -143,11 +126,18 @@ class MainActivity : Activity() {
         val ticked = Prefs.checked(this)
         targetList.removeAllViews()
         Prefs.targets(this).forEach { targetList.addView(targetRow(it, it in ticked)) }
-        status.text = getString(if (OverlayService.running) R.string.running else R.string.stopped)
+        showRunning(OverlayService.running)
         val flips = Prefs.flips(this)
         val prompt = flips >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
         tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
         if (prompt) tipDone.text = tipDoneText(ticked.singleOrNull(), flips)
+    }
+
+    /** Status line with a coloured dot, and the main button saying what it will do. */
+    private fun showRunning(on: Boolean) {
+        status.text = getString(if (on) R.string.status_on else R.string.status_off)
+        status.setTextColor(if (on) 0xFF43A047.toInt() else ui.secondaryText)
+        toggle.text = getString(if (on) R.string.hide_button else R.string.show_button)
     }
 
     /** What SocketFlip has done so far, in the user's own numbers. */
@@ -237,13 +227,13 @@ class MainActivity : Activity() {
             return
         }
         startForegroundService(Intent(this, OverlayService::class.java))
-        status.text = getString(R.string.running)
+        showRunning(true)
     }
 
     private fun stop() {
         stopService(Intent(this, OverlayService::class.java))
         FlipVpnService.stop(this)
-        status.text = getString(R.string.stopped)
+        showRunning(false)
     }
 
     /**
@@ -258,7 +248,13 @@ class MainActivity : Activity() {
         val cooldown = if (own == null) getString(R.string.target_cooldown_line_default, Prefs.cooldownSeconds(context))
         else getString(R.string.target_cooldown_line, own)
         addView(CheckBox(context).apply {
-            text = getString(R.string.target_row, name, cooldown)
+            text = SpannableStringBuilder(name).append("\n").append(
+                cooldown,
+                RelativeSizeSpan(0.85f),
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+            ).apply {
+                setSpan(ForegroundColorSpan(ui.secondaryText), name.length + 1, length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
             isChecked = ticked
             setOnCheckedChangeListener { _, on -> setTicked(pkg, on) }
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
@@ -266,14 +262,7 @@ class MainActivity : Activity() {
         addView(small(getString(R.string.target_remove)) { confirmRemove(pkg, name) })
     }
 
-    private fun small(label: String, onClick: () -> Unit) =
-        Button(this, null, android.R.attr.borderlessButtonStyle).apply {
-            text = label
-            minWidth = 0
-            minimumWidth = 0
-            setPadding(dp(8), 0, dp(8), 0)
-            setOnClickListener { onClick() }
-        }
+    private fun small(label: String, onClick: () -> Unit) = ui.textButton(label, onClick)
 
     private fun setTicked(pkg: String, on: Boolean) {
         // A running tunnel covers the old set of apps; drop it so the next tap uses the new one.
@@ -366,11 +355,6 @@ class MainActivity : Activity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQ_NOTIFY) start()
-    }
-
-    private fun button(label: String = "", onClick: () -> Unit) = Button(this).apply {
-        text = label
-        setOnClickListener { onClick() }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
