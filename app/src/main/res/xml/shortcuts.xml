@@ -4,7 +4,7 @@
     <shortcut
         android:shortcutId="flip"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:shortcutShortLabel="@string/shortcut_flip">
         <intent
             android:action="app.socketflip.shortcut.FLIP"
@@ -14,7 +14,7 @@
     <shortcut
         android:shortcutId="show"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:shortcutShortLabel="@string/shortcut_show">
         <intent
             android:action="app.socketflip.shortcut.SHOW"
@@ -24,7 +24,7 @@
     <shortcut
         android:shortcutId="hide"
         android:enabled="true"
-        android:icon="@drawable/ic_launcher"
+        android:icon="@mipmap/ic_launcher"
         android:shortcutShortLabel="@string/shortcut_hide">
         <intent
             android:action="app.socketflip.shortcut.HIDE"

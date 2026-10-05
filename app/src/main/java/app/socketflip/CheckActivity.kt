@@ -67,6 +67,8 @@ class CheckActivity : Activity() {
         list = ui.card()
         column.addView(list)
         column.addView(ui.primaryButton(getString(R.string.check_copy)) { copyReport() })
+        column.addView(ui.caption(getString(R.string.check_report_help)).apply { setPadding(dp(4), 0, dp(4), 0) })
+        column.addView(ui.row(ui.textButton(getString(R.string.check_report)) { reportProblem() }))
         setContentView(ScrollView(this).apply {
             addView(column, MATCH_PARENT, WRAP_CONTENT)
             padForSystemBars()
@@ -86,6 +88,12 @@ class CheckActivity : Activity() {
         add(
             when {
                 ticked.isEmpty() -> Item(Level.BAD, getString(R.string.check_target), getString(R.string.check_target_none)) {
+                    // Straight to the app list (or the targets, if some are just unticked).
+                    open(
+                        Intent(this@CheckActivity, MainActivity::class.java)
+                            .putExtra(MainActivity.EXTRA_PICK, true)
+                            .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
+                    )
                     finish()
                 }
                 missing.isNotEmpty() -> Item(
@@ -126,7 +134,9 @@ class CheckActivity : Activity() {
             if (otherVpn) Item(Level.INFO, getString(R.string.check_vpn), getString(R.string.check_vpn_later))
             else VpnService.prepare(this@CheckActivity).let { consent ->
                 if (consent == null) Item(Level.OK, getString(R.string.check_vpn), getString(R.string.check_allowed))
-                else Item(Level.BAD, getString(R.string.check_vpn), getString(R.string.check_vpn_off)) { askVpn(consent) }
+                else Item(Level.BAD, getString(R.string.check_vpn), getString(R.string.check_vpn_off)) {
+                    explainVpnWarning(R.string.vpn_next_title, { askVpn(consent) })
+                }
             }
         )
 
@@ -217,12 +227,26 @@ class CheckActivity : Activity() {
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
     }
 
+    private fun reportText(): String = buildString {
+        appendLine("SocketFlip ${versionName()}")
+        appendLine("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
+        items.forEach { appendLine("${it.level.mark} ${it.title}: ${it.report}") }
+    }
+
+    /**
+     * Opens a new bug report on GitHub in the browser with this report already filled
+     * in. SocketFlip sends nothing itself: the user sees the page and decides.
+     */
+    private fun reportProblem() {
+        val url = Uri.parse(Prefs.NEW_ISSUE_URL).buildUpon()
+            .appendQueryParameter("template", "bug.yml")
+            .appendQueryParameter("report", reportText())
+            .build()
+        if (!open(Intent(Intent.ACTION_VIEW, url))) copyReport()
+    }
+
     private fun copyReport() {
-        val report = buildString {
-            appendLine("SocketFlip ${versionName()}")
-            appendLine("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-            items.forEach { appendLine("${it.level.mark} ${it.title}: ${it.report}") }
-        }
+        val report = reportText()
         getSystemService(ClipboardManager::class.java)
             .setPrimaryClip(ClipData.newPlainText(getString(R.string.check_title), report))
         // Android 13+ shows its own "copied" confirmation.

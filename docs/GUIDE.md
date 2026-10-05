@@ -48,11 +48,12 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
 ## 4. First run
 
 1. Open **SocketFlip**.
-2. Tap **+ Add app** and pick the app you want to reconnect.
+2. Tap **+ Add app** and pick the app you want to reconnect. Type in the search box
+   to find it quickly; apps that Android knows are games are listed first.
 3. Tap the big **Show floating button** button. SocketFlip now asks for three
    things, one at a time (four on Samsung, Xiaomi, OnePlus and similar phones, and
-   one more note if another VPN is on). After each one, come back to SocketFlip and tap it
-   again until the button appears.
+   one more note if another VPN is on). After each one, come back to SocketFlip: it
+   carries on by itself and says what comes next, until the button appears.
 
    - **Display over other apps**: Android opens a settings page. Turn SocketFlip
      **on**, then go back.
@@ -62,8 +63,9 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
    - **Notifications**: tap **Allow**. The notification keeps the button alive
      and gives you **Flip now** and **Stop** buttons. If you refuse, the button
      still works, you just do not see the notification.
-   - **Connection request** ("SocketFlip wants to set up a VPN connection"): tap
-     **OK**. See [Why does it need a VPN?](FAQ.md#why-does-it-need-a-vpn) for
+   - **Connection request** ("SocketFlip wants to set up a VPN connection"):
+     SocketFlip first explains what is coming; tap **Continue**, then **OK** on
+     Android's request. See [Why does it need a VPN?](FAQ.md#why-does-it-need-a-vpn) for
      what this does and does not mean. If SocketFlip instead says another VPN app
      is set as Always-on, see
      [that FAQ entry](FAQ.md#socketflip-says-another-vpn-app-is-set-as-always-on).
@@ -134,6 +136,15 @@ change things.
   string extra named `token` set to that code. Broadcasts without the right code
   are ignored, so other apps cannot trigger it. The floating button must be
   switched on. Key Mapper can use this to flip on a volume button press.
+
+### One tap to start
+
+Under **Target apps**, tap **Home screen shortcut** (choose the app if you have
+more than one). Android asks to add it to your home screen. The icon is the app's
+own at full size (your home screen may add a small SocketFlip mark to it); tapping
+it shows the floating button and opens the app in one go. If something still needs
+allowing, SocketFlip opens instead, says so, and walks you through it; after that
+the shortcut works in one tap.
 
 ### More than one app
 

@@ -134,11 +134,13 @@ class OverlayService : Service() {
         )
         val open = PendingIntent.getActivity(this, 3, Intent(this, MainActivity::class.java), flags)
         notifiedTarget = Prefs.checkedLabels(this)
-        val target = notifiedTarget ?: ""
+        val target = notifiedTarget.orEmpty()
+        // With every app unticked the sentence would end mid-way; say what to do instead.
+        val text = if (target.isEmpty()) getString(R.string.notif_text_none) else getString(R.string.notif_text, target)
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.drawable.ic_flip)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.notif_text, target))
+            .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(Notification.Action.Builder(null, getString(R.string.action_flip), flip).build())

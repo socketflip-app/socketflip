@@ -169,7 +169,9 @@ it, and so does **Stop** on the notification. To have it go away by itself, turn
 
 ### "SocketFlip could not reconnect: ..."
 
-Something unexpected went wrong. Please open an issue with the exact message.
+When a tap cannot reconnect, SocketFlip shows a short message and puts the full
+reason in a notification (the "Problems" channel); tap it to open **Check setup**.
+If the reason starts "SocketFlip could not reconnect:", something unexpected went wrong. Please open an issue with the exact message.
 **Check setup > Copy report** puts your phone model, Android version and every
 setting SocketFlip depends on onto the clipboard, ready to paste into the issue.
 It does not include the name of the app you chose, and there is no need to name
@@ -254,4 +256,5 @@ good.
 Open an issue at <https://github.com/socketflip-app/socketflip/issues> with your phone
 model, Android version, what kind of app you use it with (game, chat, browser...)
 and what happened. **Check setup > Copy report** gives you most of that in one
-paste. There is no need to name the app.
+paste, and **Check setup > Report a problem** opens a new issue in your browser with
+the report already filled in. There is no need to name the app.

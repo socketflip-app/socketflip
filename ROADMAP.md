@@ -48,17 +48,17 @@ ship. Ideas and requests are welcome in the
 - [x] Option to mirror the arrow so it turns the other way (1.11)
 - [x] Optional emergency restart: a red ! during the cooldown restarts a stuck app,
       after asking, and brings it back by itself (1.11)
+- [x] Home screen shortcut that shows the button and opens your app in one tap,
+      with the app's own icon at full size (1.12)
+- [x] An easier first run: numbered steps that carry on by themselves, and a plain
+      explanation before Android's VPN warning (1.12)
+- [x] App picker with icons, search, and games listed first (1.12)
+- [x] Errors leave a notification that opens the setup check, which can open a
+      prefilled bug report (1.12)
+- [x] Adaptive launcher icon with a themed (monochrome) version (1.12)
 
 ## Later
 
-- [ ] Home screen shortcut that shows the button and opens your app in one tap,
-      with the app's own icon at full size
-- [ ] An easier first run: numbered steps that carry on by themselves, and a plain
-      explanation before Android's VPN warning
-- [ ] App picker with icons, search, and games listed first
-- [ ] Errors leave a notification that opens the setup check, which can open a
-      prefilled bug report
-- [ ] Adaptive launcher icon with a themed (monochrome) version
 - [ ] Send SocketFlip to a friend: the app itself, phone to phone, or the link
 - [ ] Your numbers: reconnects in total and this week, and restarts used, with a
       Share button (counted on the phone only)
@@ -92,3 +92,5 @@ ship. Ideas and requests are welcome in the
 - **Accessibility-service triggers.** Too much access for what they would add.
 - **Resetting UDP traffic** (calls, voice chat, QUIC). Android does not close UDP
   sockets when a VPN changes, and there is no clean way to do it.
+- **Automatic flipping** (on a timer or by detecting what an app is doing).
+  Each flip should be your decision.

@@ -51,6 +51,7 @@ class FlipVpnService : VpnService() {
         private const val TUN_ROUTE = "10.111.222.2"
         private const val WARN_CHANNEL = "warnings"
         private const val WARN_ID = 2
+        private const val PROBLEM_ID = 3
         private val FALLBACK_DNS = listOf("1.1.1.1", "9.9.9.9")
 
         @Volatile private var tun: ParcelFileDescriptor? = null
@@ -99,6 +100,49 @@ class FlipVpnService : VpnService() {
             false
         }
 
+        /**
+         * A real error, as opposed to a hint like "still reconnecting". A toast over a
+         * full-screen game is gone before it can be read, so the reason goes into a
+         * notification on the Problems channel that opens Check setup, and the toast
+         * only points at it. Without notifications the toast carries the whole reason.
+         */
+        fun problem(context: Context, text: String) {
+            val nm = context.getSystemService(NotificationManager::class.java)
+            val shown = try {
+                nm.createNotificationChannel(warnChannel(context))
+                if (!nm.areNotificationsEnabled() ||
+                    nm.getNotificationChannel(WARN_CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE
+                ) {
+                    false
+                } else {
+                    val check = PendingIntent.getActivity(
+                        context, 5,
+                        Intent(context, CheckActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                        PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+                    )
+                    nm.notify(
+                        PROBLEM_ID,
+                        Notification.Builder(context, WARN_CHANNEL)
+                            .setSmallIcon(R.drawable.ic_flip)
+                            .setContentTitle(context.getString(R.string.problem_title))
+                            .setContentText(text)
+                            .setStyle(Notification.BigTextStyle().bigText(text))
+                            .setContentIntent(check)
+                            .setAutoCancel(true)
+                            .build()
+                    )
+                    true
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "could not post the problem notification", e)
+                false
+            }
+            Toast.makeText(context, if (shown) context.getString(R.string.problem_toast) else text, Toast.LENGTH_SHORT).show()
+        }
+
+        private fun warnChannel(context: Context) =
+            NotificationChannel(WARN_CHANNEL, context.getString(R.string.warn_channel), NotificationManager.IMPORTANCE_HIGH)
+
         fun flip(context: Context) = send(context, ACTION_FLIP)
 
         fun stop(context: Context) = send(context, ACTION_STOP)
@@ -112,7 +156,7 @@ class FlipVpnService : VpnService() {
             } catch (e: IllegalStateException) {
                 // Background start refused: say so, or a tile tap would do nothing at all.
                 Log.w(TAG, "could not start service for $action", e)
-                Toast.makeText(context, context.getString(R.string.start_failed), Toast.LENGTH_SHORT).show()
+                problem(context, context.getString(R.string.start_failed))
             }
         }
     }
@@ -127,7 +171,7 @@ class FlipVpnService : VpnService() {
             warnIfAlwaysOn()
         } catch (e: Exception) {
             Log.e(TAG, "flip failed", e)
-            toast(getString(R.string.flip_failed, e.message ?: e.javaClass.simpleName))
+            problem(this, getString(R.string.flip_failed, e.message ?: e.javaClass.simpleName))
         }
         refreshTile()
         // Only stop if no newer command is queued: a FLIP right behind this one may
@@ -172,20 +216,26 @@ class FlipVpnService : VpnService() {
         // the VPN slot from any other VPN app, so never call it for a flip that cannot work.
         val targets = Prefs.checked(this).filter { installed(it) }
         if (targets.isEmpty()) {
-            toast(getString(if (Prefs.checked(this).isEmpty()) R.string.target_unset else R.string.target_missing))
+            problem(this, getString(if (Prefs.checked(this).isEmpty()) R.string.target_unset else R.string.target_missing))
             return
         }
         if (prepare(this) != null) {
             // Permission was there before, so something took it: almost always another
             // VPN app set as Always-on, which Android will not let SocketFlip replace.
-            toast(getString(if (Prefs.flips(this) > 0) R.string.vpn_taken else R.string.need_vpn))
+            problem(this, getString(if (Prefs.flips(this) > 0) R.string.vpn_taken else R.string.need_vpn))
             return
         }
         val dns = dnsServers()
         tun = establish(targets, dns)
         Log.i(TAG, "tunnel up for $targets: ${tun != null}")
         // null means the system refused, most often because another app holds Always-on.
-        if (tun == null) toast(getString(R.string.tunnel_failed)) else watchNetwork(targets, dns)
+        if (tun == null) {
+            problem(this, getString(R.string.tunnel_failed))
+        } else {
+            // It works now, so an earlier problem notification no longer applies.
+            getSystemService(NotificationManager::class.java).cancel(PROBLEM_ID)
+            watchNetwork(targets, dns)
+        }
     }
 
     private fun installed(pkg: String): Boolean = try {
@@ -307,9 +357,7 @@ class FlipVpnService : VpnService() {
         if (!isAlwaysOn) return
         Log.w(TAG, "set as Always-on VPN (lockdown=$isLockdownEnabled)")
         val nm = getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(
-            NotificationChannel(WARN_CHANNEL, getString(R.string.warn_channel), NotificationManager.IMPORTANCE_HIGH)
-        )
+        nm.createNotificationChannel(warnChannel(this))
         val fix = PendingIntent.getActivity(
             this, 4, Intent(Settings.ACTION_VPN_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
             PendingIntent.FLAG_IMMUTABLE

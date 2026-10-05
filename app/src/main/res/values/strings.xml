@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">SocketFlip</string>
     <string name="tile_label">SocketFlip</string>
-    <string name="intro">SocketFlip gives one app a clean, instant reconnect. Tap the floating button and the chosen app\'s open connections are closed by Android, so it reconnects straight away. Nothing else on the phone is touched and no traffic ever passes through SocketFlip.</string>
     <string name="intro_short">One tap gives the apps you pick a clean, instant reconnect. Nothing else on the phone is touched.</string>
     <string name="status_on">\u25CF Floating button is on</string>
     <string name="status_off">\u25CB Floating button is off</string>
@@ -14,6 +13,13 @@
     <string name="show_button">Show floating button</string>
     <string name="hide_button">Hide floating button</string>
     <string name="need_overlay">Allow \"Display over other apps\" for SocketFlip, then come back and tap again.</string>
+    <string name="walk_overlay">Step 2 of 3: allow \"Display over other apps\" for SocketFlip on the page that opened, then come back. SocketFlip carries on by itself.</string>
+    <string name="walk_pick">Step 1 of 3: pick the app you want to reconnect.</string>
+    <string name="walk_vpn">Step 3 of 3: Android asks about a VPN.</string>
+    <string name="walk_vpn_title">Step 3 of 3: Android\'s VPN warning</string>
+    <string name="vpn_next_title">Next: Android\'s VPN warning</string>
+    <string name="vpn_next_text">Android now asks if SocketFlip may set up a VPN that \"allows it to monitor network traffic\". It shows the same words for every VPN app. SocketFlip\'s tunnel covers only your ticked apps, routes one unused address, and nothing is ever read from it. SocketFlip has no internet permission, so it could not send anything anywhere.</string>
+    <string name="vpn_next_continue">Continue</string>
     <string name="need_vpn">SocketFlip needs VPN permission. Open SocketFlip and tap Show floating button.</string>
     <string name="target_missing">None of the ticked target apps is installed.</string>
     <string name="target_unset">Tick at least one target app in SocketFlip first.</string>
@@ -21,6 +27,8 @@
     <string name="start_failed">SocketFlip could not start. Open SocketFlip and try again.</string>
     <string name="flip_failed">SocketFlip could not reconnect: %1$s</string>
     <string name="cooldown">Still reconnecting, try again in a few seconds.</string>
+    <string name="problem_title">SocketFlip could not reconnect</string>
+    <string name="problem_toast">SocketFlip could not reconnect. Tap its notification to see why.</string>
     <string name="warn_channel">Problems</string>
     <string name="always_on_title">Turn off Always-on VPN for SocketFlip</string>
     <string name="always_on_lockdown">SocketFlip is set as your Always-on VPN with \"Block connections without VPN\". Its tunnel carries no traffic, so this cuts your phone off the internet. Tap here, then SocketFlip\'s gear icon, and turn both switches off.</string>
@@ -53,6 +61,8 @@
     <string name="check_intro">Everything SocketFlip needs, and whether your phone allows it. Tap Fix next to anything marked with a cross or an exclamation mark.</string>
     <string name="check_copy">Copy report</string>
     <string name="check_copied">Report copied. Paste it into your bug report.</string>
+    <string name="check_report">Report a problem</string>
+    <string name="check_report_help">Report a problem opens a new bug report on GitHub in your browser, with this report filled in. You see it before anything is sent, and it never names your apps.</string>
     <string name="check_fix">Fix</string>
     <string name="check_allowed">Allowed</string>
     <string name="check_on">On</string>
@@ -134,6 +144,11 @@
     <string name="check_usage_off">Not allowed, so the settings that follow the target app cannot work.</string>
     <string name="targets_title">Target apps</string>
     <string name="targets_add">Add target app</string>
+    <string name="picker_search">Search apps</string>
+    <string name="picker_games">Games</string>
+    <string name="picker_other">Other apps</string>
+    <string name="picker_empty">Every app on this phone is already in your list.</string>
+    <string name="picker_no_match">No app matches that.</string>
     <string name="targets_help">Every ticked app is reconnected by each tap. Untick an app to leave it alone without removing it.</string>
     <string name="target_cooldown_line">%1$d s cooldown, just this app</string>
     <string name="target_cooldown_line_default">%1$d s cooldown</string>
@@ -160,8 +175,15 @@
     <string name="restart_force">Open App info (Force stop)</string>
     <string name="restart_cannot_ask">SocketFlip could not ask first, so nothing was restarted. Close the app yourself, or use Force stop in its App info.</string>
     <string name="restart_failed">Could not restart %1$s. Open it from the home screen.</string>
+    <string name="shortcut_setup_title">Finish setup to use your shortcut</string>
+    <string name="shortcut_setup_text">Your shortcut needs SocketFlip to be set up first: an app ticked, permission to show the button, and Android\'s VPN request. Tap Continue to go through them. After that the shortcut works in one tap.</string>
+    <string name="shortcut_add">Home screen shortcut</string>
+    <string name="shortcut_which">Shortcut for which app?</string>
+    <string name="shortcut_long">%1$s with SocketFlip</string>
+    <string name="shortcut_unsupported">Your home screen app does not support adding shortcuts.</string>
     <string name="channel_name">Floating button</string>
     <string name="notif_text">Tap the floating button to reconnect %1$s</string>
+    <string name="notif_text_none">No app ticked: open SocketFlip to choose one.</string>
     <string name="action_flip">Flip now</string>
     <string name="action_stop">Stop</string>
 </resources>

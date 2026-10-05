@@ -11,9 +11,9 @@ android {
         applicationId = "app.socketflip"
         minSdk = 29
         targetSdk = 35
-        versionCode = 14
-        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.11-test3".
-        versionName = "1.11" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
+        versionCode = 16
+        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.12-test3".
+        versionName = "1.12" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
     }
 
     // Release signing comes from ~/.gradle/gradle.properties (never the repo):

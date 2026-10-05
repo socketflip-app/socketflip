@@ -31,21 +31,31 @@ import android.widget.TextView
 class MainActivity : Activity() {
 
     companion object {
+        /** Opened from Check setup's target Fix: show the app list straight away. */
+        const val EXTRA_PICK = "pick"
+        /** Opened by a home screen shortcut that cannot run yet: explain, then set up. */
+        const val EXTRA_SHORTCUT = "from_shortcut"
         private const val REQ_VPN = 1
         private const val REQ_NOTIFY = 2
         // Android closes its VPN consent screen unseen when another app holds
         // Always-on VPN; a "cancel" this fast means nobody saw a dialog.
         private const val UNSEEN_CANCEL_MS = 500L
+        private const val STATE_PENDING = "pending_start"
+        private const val STATE_HINT = "hint"
     }
 
     private lateinit var ui: Ui
     private lateinit var targetList: LinearLayout
     private lateinit var status: TextView
+    private lateinit var hint: TextView
     private lateinit var toggle: Button
     private lateinit var tipCard: LinearLayout
     private lateinit var tipDone: TextView
     private var askedNotify = false
     private var consentAskedAt = 0L
+    // Set when the setup walk sends the user to a system page; onResume carries on
+    // from there, so nobody has to find the button and tap it a second time.
+    private var pendingStart = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,13 +72,24 @@ class MainActivity : Activity() {
             setPadding(dp(4), dp(4), dp(4), dp(16))
         }
         column.addView(status)
+        // The next setup step, kept apart from the status line so refresh() never wipes it.
+        hint = TextView(this).apply {
+            setTextSize(TypedValue.COMPLEX_UNIT_SP, 14f)
+            setTextColor(ui.primaryText)
+            setPadding(dp(4), 0, dp(4), dp(16))
+            visibility = View.GONE
+        }
+        column.addView(hint)
 
         column.addView(ui.card().apply {
             addView(ui.sectionTitle(getString(R.string.targets_title)))
             targetList = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
             addView(targetList)
             addView(ui.caption(getString(R.string.targets_help)))
-            addView(ui.textButton(getString(R.string.targets_add_plus)) { pickTarget() }, WRAP_CONTENT, WRAP_CONTENT)
+            addView(ui.row(
+                ui.textButton(getString(R.string.targets_add_plus)) { pickTarget() },
+                ui.textButton(getString(R.string.shortcut_add)) { addShortcut() },
+            ))
         })
 
         toggle = ui.primaryButton("") { if (OverlayService.running) stop() else start() }
@@ -112,11 +133,55 @@ class MainActivity : Activity() {
             // Android 15+ draws edge to edge; keep content clear of the system bars.
             padForSystemBars()
         })
+        savedInstanceState?.let {
+            pendingStart = it.getBoolean(STATE_PENDING)
+            it.getString(STATE_HINT)?.let { text -> showHint(text) }
+        }
+        if (savedInstanceState == null) handleExtras(intent)
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleExtras(intent)
+    }
+
+    private fun handleExtras(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_SHORTCUT, false) == true) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.shortcut_setup_title)
+                .setMessage(R.string.shortcut_setup_text)
+                .setPositiveButton(R.string.vpn_next_continue) { _, _ -> start() }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            return
+        }
+        if (intent?.getBooleanExtra(EXTRA_PICK, false) != true) return
+        // Apps already in the list are just unticked; the list is where to fix that.
+        if (Prefs.targets(this).isEmpty()) pickTarget() else showHint(getString(R.string.target_unset))
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_PENDING, pendingStart)
+        if (hint.visibility == View.VISIBLE) outState.putString(STATE_HINT, hint.text.toString())
+    }
+
+    /** Shows what to do next under the status line, or hides it for null. */
+    private fun showHint(text: String?) {
+        hint.text = text ?: ""
+        hint.visibility = if (text == null) View.GONE else View.VISIBLE
     }
 
     override fun onResume() {
         super.onResume()
         refresh()
+        // Back from the overlay settings page with the permission granted: carry on.
+        if (pendingStart && Settings.canDrawOverlays(this)) {
+            pendingStart = false
+            start()
+            return
+        }
         // prepare() is not a read-only question: once SocketFlip has permission it takes
         // the VPN slot from any other VPN app. So never call it while another VPN is on.
         if (!FlipVpnService.otherVpnActive(this) && VpnService.prepare(this) == null) FlipVpnService.check(this)
@@ -161,7 +226,7 @@ class MainActivity : Activity() {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (e: ActivityNotFoundException) {
-            status.text = url
+            showHint(url)
         }
     }
 
@@ -171,15 +236,17 @@ class MainActivity : Activity() {
     /** Walks the user through each missing permission, then shows the button. */
     private fun start() {
         if (Prefs.targets(this).isEmpty()) {
-            pickTarget()
+            showHint(getString(R.string.walk_pick))
+            pickTarget(thenStart = true)
             return
         }
         if (Prefs.checked(this).isEmpty()) {
-            status.text = getString(R.string.target_unset)
+            showHint(getString(R.string.target_unset))
             return
         }
         if (!Settings.canDrawOverlays(this)) {
-            status.text = getString(R.string.need_overlay)
+            showHint(getString(R.string.walk_overlay))
+            pendingStart = true
             startActivity(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             return
         }
@@ -205,13 +272,10 @@ class MainActivity : Activity() {
                 .show()
             return
         }
-        VpnService.prepare(this)?.let {
-            consentAskedAt = SystemClock.elapsedRealtime()
-            try {
-                startActivityForResult(it, REQ_VPN)
-            } catch (e: ActivityNotFoundException) {
-                alwaysOnDialog()
-            }
+        VpnService.prepare(this)?.let { consent ->
+            showHint(getString(R.string.walk_vpn))
+            // Coming back from the explanation page shows this dialog again.
+            explainVpnWarning(R.string.walk_vpn_title, { askConsent(consent) }, { pendingStart = true })
             return
         }
         // Ask once, and only on phones whose makers are known to close background apps.
@@ -227,12 +291,23 @@ class MainActivity : Activity() {
             return
         }
         startForegroundService(Intent(this, OverlayService::class.java))
+        showHint(null)
         showRunning(true)
+    }
+
+    private fun askConsent(consent: Intent) {
+        consentAskedAt = SystemClock.elapsedRealtime()
+        try {
+            startActivityForResult(consent, REQ_VPN)
+        } catch (e: ActivityNotFoundException) {
+            alwaysOnDialog()
+        }
     }
 
     private fun stop() {
         stopService(Intent(this, OverlayService::class.java))
         FlipVpnService.stop(this)
+        showHint(null)
         showRunning(false)
     }
 
@@ -300,23 +375,27 @@ class MainActivity : Activity() {
             .show()
     }
 
-    private fun pickTarget() {
-        val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-        val existing = Prefs.targets(this)
-        val apps = packageManager.queryIntentActivities(launcher, 0)
-            .map { it.activityInfo.packageName }
-            .filter { it != packageName && it !in existing }
-            .distinct()
-            .map { it to Prefs.label(this, it) }
-            .sortedBy { it.second.lowercase() }
-        AlertDialog.Builder(this)
-            .setTitle(R.string.targets_add)
-            .setItems(apps.map { it.second }.toTypedArray()) { _, i ->
-                if (FlipVpnService.isUp) FlipVpnService.stop(this)
-                Prefs.addTarget(this, apps[i].first)
-                refresh()
-            }
-            .show()
+    /** Home screen icon for one app: for the ticked app, or ask which. */
+    private fun addShortcut() {
+        val apps = Prefs.targets(this)
+        when {
+            apps.isEmpty() -> pickTarget()
+            apps.size == 1 -> GameShortcut.pin(this, apps[0])
+            else -> AlertDialog.Builder(this)
+                .setTitle(R.string.shortcut_which)
+                .setItems(apps.map { Prefs.label(this, it) }.toTypedArray()) { _, i -> GameShortcut.pin(this, apps[i]) }
+                .show()
+        }
+    }
+
+    /** [thenStart]: picked as step 1 of the setup walk, so carry on with step 2. */
+    private fun pickTarget(thenStart: Boolean = false) {
+        AppPicker(this) { pkg ->
+            if (FlipVpnService.isUp) FlipVpnService.stop(this)
+            Prefs.addTarget(this, pkg)
+            refresh()
+            if (thenStart) start()
+        }.show()
     }
 
     @Deprecated("Platform Activity API; no AndroidX in this app")

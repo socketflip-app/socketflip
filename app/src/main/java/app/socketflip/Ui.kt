@@ -1,6 +1,11 @@
 package app.socketflip
 
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.content.res.Configuration
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -34,6 +39,29 @@ fun View.padForSystemBars() = setOnApplyWindowInsetsListener { v, insets ->
         )
     }
     insets
+}
+
+/**
+ * Said just before Android's VPN consent screen, whose "monitor network traffic"
+ * wording is the scariest moment of the setup: what the tunnel really does, and a
+ * link to the full explanation. [onContinue] opens the consent screen; [onWhy] runs
+ * after the explanation page has been opened in the browser.
+ */
+fun Activity.explainVpnWarning(title: Int, onContinue: () -> Unit, onWhy: () -> Unit = {}) {
+    AlertDialog.Builder(this)
+        .setTitle(title)
+        .setMessage(R.string.vpn_next_text)
+        .setPositiveButton(R.string.vpn_next_continue) { _, _ -> onContinue() }
+        .setNeutralButton(R.string.consent_why_safe) { _, _ ->
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Prefs.SAFETY_WHY_VPN_URL)))
+                onWhy()
+            } catch (e: ActivityNotFoundException) {
+                // No browser; the dialog text already says the essentials.
+            }
+        }
+        .setNegativeButton(android.R.string.cancel, null)
+        .show()
 }
 
 /**

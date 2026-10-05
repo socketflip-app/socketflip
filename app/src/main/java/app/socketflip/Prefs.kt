@@ -54,6 +54,8 @@ object Prefs {
 
     /** The page that explains, for the wary, what the VPN permission is and is not used for. */
     const val SAFETY_URL = "$SOURCE_URL/blob/main/docs/SAFETY.md"
+    const val SAFETY_WHY_VPN_URL = "$SAFETY_URL#why-a-vpn"
+    const val NEW_ISSUE_URL = "$SOURCE_URL/issues/new"
 
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
