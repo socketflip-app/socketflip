@@ -77,7 +77,7 @@ in front". It is paired with the notification above. It does not show a prompt.
 
 ### View network connections
 Lets SocketFlip read which DNS servers your Wi-Fi or mobile network uses, so it
-can pass them on to the app you picked (otherwise that app could not look up
+can pass them on to the apps you picked (otherwise they could not look up
 addresses while the tunnel is on). It can only *read* this, not change it, and it
 does not show a prompt.
 
@@ -92,8 +92,8 @@ needs [Usage access](#usage-access-optional).
 
 ### Usage access (optional)
 Lets SocketFlip see which app is on screen. It is only asked for if you turn on
-**Only show the button while the target app is on screen** or **Take the tunnel
-down when I leave the target app** in Settings, and you grant it yourself in
+**Only show the button while a ticked app is on screen** or **Take the tunnel
+down when I leave the ticked apps** in Settings, and you grant it yourself in
 **Settings > Usage access** (on Android 15 and newer you may first need
 **Allow restricted settings**, see the
 [FAQ](FAQ.md#the-display-over-other-apps-or-usage-access-switch-is-greyed-out)).
@@ -124,7 +124,7 @@ can only do what a tap on the button does, with the same cooldown.
 
 ## Why a VPN
 
-SocketFlip needs a way to make one app drop its connection and reconnect,
+SocketFlip needs a way to make the apps you pick drop their connections and reconnect,
 instantly, without touching the rest of your phone. Android has no "reconnect
 this app" button, and ordinary apps are not allowed to interfere with other apps'
 connections.
@@ -135,7 +135,7 @@ reopened through the new route. SocketFlip uses exactly that, and nothing more:
 
 - Its "VPN" covers **only the apps you pick**. Every other app is untouched.
 - It routes **one private address that nothing uses** (`10.111.222.2`). None of
-  your traffic, and none of the chosen app's real traffic, goes into it. Everything
+  your traffic, and none of the chosen apps' real traffic, goes into it. Everything
   still goes out over your Wi-Fi or mobile data as normal.
 - There is **no server** at the other end. Nothing leaves your phone.
 - Each tap switches it on or off. Either change makes Android close the app's

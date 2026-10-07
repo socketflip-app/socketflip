@@ -183,9 +183,9 @@ it in the issue.
 
 SocketFlip uses Android's VPN feature as a switch, not as a VPN. When a VPN covering
 an app starts or stops, Android closes that app's open connections. That is the
-reconnect. SocketFlip's tunnel covers only the app you picked, claims one private
+reconnect. SocketFlip's tunnel covers only the apps you picked, claims one private
 address that nothing uses (`10.111.222.2`), and routes nothing else. All of your
-traffic, including the target app's, goes out over Wi-Fi or mobile data as
+traffic, including the target apps', goes out over Wi-Fi or mobile data as
 normal. There is no server at the other end.
 
 ### Can SocketFlip see my traffic?
@@ -223,8 +223,8 @@ so it cannot slow anything down.
 ### Is it different from turning on airplane mode?
 
 Very. Airplane mode drops Wi-Fi and mobile data for the whole phone, and getting
-them back takes several seconds. SocketFlip touches only the one app and it
-reconnects at once. A per-app firewall block does not work either: it only stalls
+them back takes several seconds. SocketFlip touches only the apps you ticked and they
+reconnect at once. A per-app firewall block does not work either: it only stalls
 the connection, and a short stall is never noticed.
 
 ### Is it safe to use in online games?
