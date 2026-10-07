@@ -1,8 +1,8 @@
 # SocketFlip
 
-A floating button for Android that gives one chosen app a clean, instant reconnect.
+A floating button for Android that gives the apps you choose a clean, instant reconnect.
 
-Tap the button and Android closes the target app's open network connections. The
+Tap the button and Android closes the target apps' open network connections. Each
 app notices straight away and reconnects over your normal network, usually within
 a second or two. Nothing else on the phone is touched, and no traffic ever passes
 through SocketFlip.
