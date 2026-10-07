@@ -172,7 +172,7 @@ end of the Appearance section. Opacity never goes below 15%, so the button can a
 
 SocketFlip's tunnel is up. That does nothing to your traffic; the next tap removes
 it, and so does **Stop** on the notification. To have it go away by itself, turn on
-**Settings > Take the tunnel down when I leave the target app**.
+**Settings > Take the tunnel down when I leave the ticked apps**.
 
 ### "SocketFlip could not reconnect: ..."
 
