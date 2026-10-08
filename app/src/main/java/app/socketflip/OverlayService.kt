@@ -3,7 +3,6 @@ package app.socketflip
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
-import android.app.AlertDialog
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -18,7 +17,6 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -90,7 +88,7 @@ class OverlayService : Service() {
         Prefs.unlisten(this, settingsChanged)
         watcher?.stop()
         watcher = null
-        handler.removeCallbacks(dropIfLeft)
+        handler.removeCallbacksAndMessages(null)
         // Never crash over the target app: the view may already be detached.
         button?.let {
             try {
@@ -173,6 +171,9 @@ class OverlayService : Service() {
         var startX = 0
         var startY = 0
         var dragging = false
+        // Press and hold is for moving the button: a hold released without moving
+        // is not a tap, so it never flips and never offers the emergency restart.
+        val holdMs = ViewConfiguration.getLongPressTimeout().toLong()
         view.setOnClickListener { tapped(view) }
         view.setOnTouchListener { v, e ->
             when (e.actionMasked) {
@@ -194,9 +195,11 @@ class OverlayService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
-                    if (!dragging) v.performClick()
-                    else if (Prefs.snapToEdge(this)) snap(v, lp)
-                    else Prefs.setPosition(this, lp.x, lp.y)
+                    when {
+                        dragging -> if (Prefs.snapToEdge(this)) snap(v, lp) else Prefs.setPosition(this, lp.x, lp.y)
+                        e.eventTime - e.downTime < holdMs -> v.performClick()
+                        else -> Unit
+                    }
                     true
                 }
                 else -> false
@@ -369,12 +372,27 @@ class OverlayService : Service() {
     private fun px(dp: Int) = (dp * resources.displayMetrics.density).toInt()
 
     private fun tapped(view: FlipButtonView) {
+        val cooling = FlipVpnService.cooldownLeft(this) > 0f
+        // Emergency restart: while the cooldown runs (the red !), a tap offers to
+        // restart the app, always behind the confirmation dialog.
+        val restart = cooling && Prefs.emergencyRestart(this)
+        if (cooling && !restart) {
+            // Refused: the flip service would drop it anyway. Say so by feel and sight,
+            // never with the success buzz and flash, since the hint toast may be off.
+            // REJECT is Android 11+; Android 10 gets no buzz, only the ring pulse.
+            if (Prefs.haptics(this) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                view.performHapticFeedback(HapticFeedbackConstants.REJECT)
+            }
+            view.pulse()
+            if (Prefs.hints(this)) Toast.makeText(this, R.string.cooldown, Toast.LENGTH_SHORT).show()
+            return
+        }
         // CONFIRM is Android 11+; Android 10 gets the plain tap feedback.
         if (Prefs.haptics(this)) view.performHapticFeedback(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) HapticFeedbackConstants.CONFIRM
             else HapticFeedbackConstants.VIRTUAL_KEY
         )
-        if (Prefs.emergencyRestart(this) && FlipVpnService.cooldownLeft(this) > 0f) {
+        if (restart) {
             confirmRestart()
             return
         }
@@ -394,23 +412,8 @@ class OverlayService : Service() {
         }
         // The app on screen, if Usage access says which; the only ticked app; or ask.
         val choice = foreground?.takeIf { it in targets } ?: targets.singleOrNull()
-        val builder = AlertDialog.Builder(ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Dialog_Alert))
-            .setTitle(R.string.restart_title)
-            .setNegativeButton(android.R.string.cancel, null)
-        if (choice != null) {
-            val name = Prefs.label(this, choice)
-            builder.setMessage(getString(R.string.restart_text, name))
-                .setPositiveButton(R.string.restart_go) { _, _ -> Restart.restart(this, choice) }
-                .setNeutralButton(R.string.restart_force) { _, _ -> Restart.appInfo(this, choice) }
-        } else {
-            builder.setItems(targets.map { Prefs.label(this, it) }.toTypedArray()) { _, i ->
-                Restart.restart(this, targets[i])
-            }
-        }
-        val dialog = builder.create()
-        dialog.window?.setType(WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY)
         try {
-            dialog.show()
+            RestartDialog.show(this, targets, choice)
         } catch (e: Exception) {
             // Never crash over the target app, and never restart without asking: a
             // restart can throw away a match in progress.

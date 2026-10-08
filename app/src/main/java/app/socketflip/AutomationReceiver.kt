@@ -34,7 +34,7 @@ class AutomationReceiver : BroadcastReceiver() {
             Log.i(TAG, "automation broadcast ignored: switched off")
             return
         }
-        if (intent.getStringExtra(EXTRA_TOKEN) != Prefs.automationToken(context)) {
+        if (!Prefs.tokenMatches(intent.getStringExtra(EXTRA_TOKEN), Prefs.automationToken(context))) {
             Log.w(TAG, "automation broadcast ignored: missing or wrong token")
             return
         }

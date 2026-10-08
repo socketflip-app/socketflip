@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
@@ -27,6 +28,7 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import java.text.NumberFormat
 
 class MainActivity : Activity() {
 
@@ -42,6 +44,8 @@ class MainActivity : Activity() {
         private const val UNSEEN_CANCEL_MS = 500L
         private const val STATE_PENDING = "pending_start"
         private const val STATE_HINT = "hint"
+        /** From this age on, the About card says how old this copy is and points at Updates. */
+        private const val OLD_AFTER_DAYS = 30
     }
 
     private lateinit var ui: Ui
@@ -51,6 +55,7 @@ class MainActivity : Activity() {
     private lateinit var toggle: Button
     private lateinit var tipCard: LinearLayout
     private lateinit var tipDone: TextView
+    private lateinit var numbers: TextView
     private var askedNotify = false
     private var consentAskedAt = 0L
     // Set when the setup walk sends the user to a system page; onResume carries on
@@ -116,16 +121,33 @@ class MainActivity : Activity() {
         }
         column.addView(tipCard)
 
+        // Always there, so the count never vanishes with the one-off tip card.
+        column.addView(ui.card().apply {
+            addView(ui.sectionTitle(getString(R.string.numbers_title)))
+            numbers = ui.caption()
+            addView(numbers)
+            addView(ui.row(ui.textButton(getString(R.string.numbers_share)) { shareNumbers() }))
+        })
+
         column.addView(ui.card().apply {
             addView(ui.sectionTitle(getString(R.string.about_title)))
             addView(ui.caption(getString(R.string.tip_line)))
-            addView(ui.caption(getString(R.string.version_line, installedVersion())))
+            val days = daysSinceUpdate()
+            val old = days >= OLD_AFTER_DAYS
+            addView(ui.caption(
+                if (old) resources.getQuantityString(R.plurals.version_old, days, installedVersion(), days)
+                else getString(R.string.version_line, installedVersion())
+            ).apply { if (old) setTextColor(ui.primaryText) })
+            addView(ui.caption(getString(R.string.obtainium_line)))
             addView(ui.caption(getString(R.string.licence_line)))
             addView(ui.row(
                 ui.textButton(getString(R.string.tip_button)) { openTip() },
-                ui.textButton(getString(R.string.check_updates_short)) { openUrl(Prefs.RELEASES_URL) },
+                ui.textButton(getString(R.string.check_updates_short)) { openUrl(Prefs.RELEASES_URL) }.apply {
+                    if (old) setTypeface(typeface, Typeface.BOLD)
+                },
                 ui.textButton(getString(R.string.source_short)) { openUrl(Prefs.SOURCE_URL) },
             ))
+            addView(ui.row(ui.textButton(getString(R.string.share_app)) { shareApp() }))
         })
 
         setContentView(ScrollView(this).apply {
@@ -196,6 +218,60 @@ class MainActivity : Activity() {
         val prompt = flips >= Prefs.TIP_PROMPT_AFTER && !Prefs.tipDismissed(this)
         tipCard.visibility = if (prompt) View.VISIBLE else View.GONE
         if (prompt) tipDone.text = tipDoneText(ticked.singleOrNull(), flips)
+        val count = NumberFormat.getIntegerInstance()
+        numbers.text = getString(
+            R.string.numbers_line,
+            count.format(flips), count.format(Prefs.flipsThisWeek(this)), count.format(Prefs.restarts(this)),
+        )
+    }
+
+    /** Plain text through Android's share sheet: the user picks the app and sees the words first. */
+    private fun shareNumbers() {
+        val flips = Prefs.flips(this)
+        val text = resources.getQuantityString(
+            R.plurals.numbers_share_text, flips, NumberFormat.getIntegerInstance().format(flips), Prefs.SOURCE_URL,
+        )
+        shareText(text, getString(R.string.numbers_share_chooser))
+    }
+
+    /**
+     * The installed APK itself (same file, same signature as the release), or just the
+     * link for people who would rather download it. The file is served by [ApkProvider].
+     */
+    private fun shareApp() {
+        val link = getString(R.string.share_app_link_text, Prefs.RELEASES_URL)
+        if (!ApkProvider.available(this)) return shareText(link, getString(R.string.share_app_title))
+        AlertDialog.Builder(this)
+            .setTitle(R.string.share_app_title)
+            .setItems(arrayOf(getString(R.string.share_app_file), getString(R.string.share_app_link))) { _, which ->
+                if (which == 0) shareApk() else shareText(link, getString(R.string.share_app_title))
+            }
+            .show()
+    }
+
+    private fun shareApk() {
+        val uri = ApkProvider.uri(this)
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(ApkProvider.MIME)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .putExtra(Intent.EXTRA_TEXT, getString(R.string.share_app_file_text, Prefs.SOURCE_URL))
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // The chooser passes the read grant on only for a URI in the ClipData.
+        send.clipData = ClipData.newRawUri(ApkProvider.fileName(this), uri)
+        try {
+            startActivity(Intent.createChooser(send, getString(R.string.share_app_title)))
+        } catch (e: ActivityNotFoundException) {
+            showHint(getString(R.string.share_app_link_text, Prefs.RELEASES_URL))
+        }
+    }
+
+    private fun shareText(text: String, title: String) {
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        try {
+            startActivity(Intent.createChooser(send, title))
+        } catch (e: ActivityNotFoundException) {
+            showHint(text)
+        }
     }
 
     /** Status line with a coloured dot, and the main button saying what it will do. */
@@ -228,6 +304,12 @@ class MainActivity : Activity() {
         } catch (e: ActivityNotFoundException) {
             showHint(url)
         }
+    }
+
+    /** Days since this copy was installed or last updated; known offline, no permission needed. */
+    private fun daysSinceUpdate(): Int {
+        val updated = packageManager.getPackageInfo(packageName, 0).lastUpdateTime
+        return ((System.currentTimeMillis() - updated) / 86_400_000L).coerceIn(0L, 100_000L).toInt()
     }
 
     private fun installedVersion(): String =

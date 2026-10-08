@@ -177,6 +177,16 @@ class CheckActivity : Activity() {
             }
         )
 
+        // Cannot be read, so never green: a warning while emergency restart relies on it.
+        if (Battery.xiaomi) {
+            add(
+                Item(
+                    if (Prefs.emergencyRestart(this@CheckActivity)) Level.WARN else Level.INFO,
+                    getString(R.string.check_xiaomi), getString(R.string.check_xiaomi_detail),
+                ) { Battery.openXiaomiPermissions(this@CheckActivity) }
+            )
+        }
+
         if (Prefs.onlyOverTarget(this@CheckActivity) || Prefs.dropOnLeave(this@CheckActivity)) {
             add(
                 if (ForegroundWatcher.granted(this@CheckActivity))
@@ -231,6 +241,8 @@ class CheckActivity : Activity() {
         appendLine("SocketFlip ${versionName()}")
         appendLine("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
         items.forEach { appendLine("${it.level.mark} ${it.title}: ${it.report}") }
+        val ctx = this@CheckActivity
+        appendLine("Reconnects: ${Prefs.flips(ctx)} in total, ${Prefs.flipsThisWeek(ctx)} this week; emergency restarts: ${Prefs.restarts(ctx)}")
     }
 
     /**

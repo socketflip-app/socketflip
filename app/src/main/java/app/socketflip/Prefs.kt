@@ -3,14 +3,23 @@ package app.socketflip
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import java.security.MessageDigest
 import java.security.SecureRandom
+import java.util.TimeZone
 
 object Prefs {
     private const val FILE = "socketflip"
+    // Never backed up (see res/xml/data_extraction_rules.xml): facts about this install only.
+    private const val DEVICE_FILE = "socketflip_device"
+    private const val KEY_INSTALL_ID = "install_id"
+    private const val KEY_VPN_WORKED = "vpn_worked"
     private const val KEY_TARGET = "target"
     private const val KEY_X = "x"
     private const val KEY_Y = "y"
     private const val KEY_FLIPS = "flips"
+    private const val KEY_WEEK = "flips_week"
+    private const val KEY_WEEK_FLIPS = "flips_this_week"
+    private const val KEY_RESTARTS = "restarts"
     private const val KEY_TIP_DISMISSED = "tip_dismissed"
     private const val KEY_OTHER_VPN_WARNED = "other_vpn_warned"
     private const val KEY_BATTERY_ASKED = "battery_asked"
@@ -60,27 +69,85 @@ object Prefs {
     /** Successful flips before the one-time "enjoying it?" card appears. */
     const val TIP_PROMPT_AFTER = 25
 
-    private fun prefs(context: Context) = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+    @Volatile private var restoreChecked = false
+
+    private fun prefs(context: Context): SharedPreferences {
+        val p = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
+        if (!restoreChecked) forgetOtherPhone(context, p)
+        return p
+    }
+
+    /**
+     * The settings file goes into the phone's own backup, so a new phone or a reinstall
+     * gets the targets, look and cooldowns back. A few keys describe the old phone,
+     * not the user's choices: whether it already asked about battery or another VPN,
+     * and whether its VPN permission ever worked. An id kept in both files tells a
+     * restore (the settings carry another install's id) from an upgrade (no id yet),
+     * and after a restore those keys are dropped so this phone asks for itself.
+     */
+    @Synchronized
+    private fun forgetOtherPhone(context: Context, p: SharedPreferences) {
+        if (restoreChecked) return
+        // Set first: the commit below calls settings listeners, which read Prefs again.
+        restoreChecked = true
+        val device = context.getSharedPreferences(DEVICE_FILE, Context.MODE_PRIVATE)
+        val here = device.getString(KEY_INSTALL_ID, null)
+        val saved = p.getString(KEY_INSTALL_ID, null)
+        if (here != null && here == saved) return
+        val id = here ?: randomCode()
+        device.edit().putString(KEY_INSTALL_ID, id).commit()
+        val edit = p.edit().putString(KEY_INSTALL_ID, id)
+        if (saved != null) {
+            edit.remove(KEY_BATTERY_ASKED).remove(KEY_OTHER_VPN_WARNED).putBoolean(KEY_VPN_WORKED, false)
+        }
+        edit.commit()
+    }
+
+    fun randomCode(): String {
+        val chars = "abcdefghijkmnpqrstuvwxyz23456789"
+        val random = SecureRandom()
+        return String(CharArray(16) { chars[random.nextInt(chars.length)] })
+    }
+
+    /**
+     * Whether SocketFlip's tunnel has come up on this phone before, so a refused VPN
+     * permission now means something took it (Always-on). Before 1.13 the flip count
+     * stood for this.
+     */
+    fun vpnWorked(context: Context): Boolean = prefs(context).getBoolean(KEY_VPN_WORKED, flips(context) > 0)
+
+    fun setVpnWorked(context: Context) {
+        if (!prefs(context).getBoolean(KEY_VPN_WORKED, false)) prefs(context).edit().putBoolean(KEY_VPN_WORKED, true).apply()
+    }
 
     /** The active target: the app the next flip applies to. */
     /** Every app the user has added, in the order added. Versions before 1.10 kept only one. */
-    fun targets(context: Context): List<String> {
-        val stored = prefs(context).getString(KEY_TARGETS, null)?.split("\n")?.filter { it.isNotEmpty() }
-        return stored ?: listOfNotNull(prefs(context).getString(KEY_TARGET, null))
-    }
+    fun targets(context: Context): List<String> =
+        parseTargets(prefs(context).getString(KEY_TARGETS, null), prefs(context).getString(KEY_TARGET, null))
 
     /** The ticked apps: every tap reconnects all of these at once. */
-    fun checked(context: Context): List<String> {
-        val stored = prefs(context).getString(KEY_CHECKED, null)?.split("\n")?.filter { it.isNotEmpty() }
-        val all = targets(context)
-        return (stored ?: all).filter { it in all }
-    }
+    fun checked(context: Context): List<String> =
+        parseChecked(prefs(context).getString(KEY_CHECKED, null), targets(context))
+
+    // The lists are stored as package names, one per line. Pure, so the unit tests cover them.
+
+    /** The target list, or the single pre-1.10 target when the list was never written. */
+    fun parseTargets(stored: String?, legacy: String?): List<String> =
+        stored?.let(::splitList) ?: listOfNotNull(legacy?.takeIf { it.isNotEmpty() })
+
+    /** The ticked apps among [all]; all of them when nothing was ever ticked (pre-1.10). */
+    fun parseChecked(stored: String?, all: List<String>): List<String> =
+        (stored?.let(::splitList) ?: all).filter { it in all }
+
+    fun joinList(list: List<String>): String = list.joinToString("\n")
+
+    private fun splitList(s: String) = s.split("\n").filter { it.isNotEmpty() }
 
     fun setChecked(context: Context, pkg: String, on: Boolean) {
         val now = checked(context).toMutableList()
         if (on && pkg !in now) now += pkg
         if (!on) now -= pkg
-        prefs(context).edit().putString(KEY_CHECKED, now.joinToString("\n")).apply()
+        prefs(context).edit().putString(KEY_CHECKED, joinList(now)).apply()
     }
 
     /** Adds [pkg] to the list, ticked. */
@@ -89,8 +156,8 @@ object Prefs {
         if (pkg in list) return setChecked(context, pkg, true)
         val ticked = checked(context) + pkg
         prefs(context).edit()
-            .putString(KEY_TARGETS, (list + pkg).joinToString("\n"))
-            .putString(KEY_CHECKED, ticked.joinToString("\n"))
+            .putString(KEY_TARGETS, joinList(list + pkg))
+            .putString(KEY_CHECKED, joinList(ticked))
             .apply()
     }
 
@@ -98,8 +165,8 @@ object Prefs {
         val list = targets(context) - pkg
         val ticked = checked(context) - pkg
         prefs(context).edit()
-            .putString(KEY_TARGETS, list.joinToString("\n"))
-            .putString(KEY_CHECKED, ticked.joinToString("\n"))
+            .putString(KEY_TARGETS, joinList(list))
+            .putString(KEY_CHECKED, joinList(ticked))
             .remove(KEY_TARGET_COOLDOWN + pkg)
             .apply()
     }
@@ -136,7 +203,30 @@ object Prefs {
     fun flips(context: Context): Int = prefs(context).getInt(KEY_FLIPS, 0)
 
     fun countFlip(context: Context) =
-        prefs(context).edit().putInt(KEY_FLIPS, flips(context) + 1).apply()
+        prefs(context).edit()
+            .putInt(KEY_FLIPS, flips(context) + 1)
+            .putLong(KEY_WEEK, week())
+            .putInt(KEY_WEEK_FLIPS, flipsThisWeek(context) + 1)
+            .apply()
+
+    /** Reconnects since Monday (local time); the stored count belongs to an older week otherwise. */
+    fun flipsThisWeek(context: Context): Int {
+        val p = prefs(context)
+        return if (p.getLong(KEY_WEEK, -1L) == week()) p.getInt(KEY_WEEK_FLIPS, 0) else 0
+    }
+
+    /** Emergency restarts the user has confirmed, counted next to reconnects for an honest ratio. */
+    fun restarts(context: Context): Int = prefs(context).getInt(KEY_RESTARTS, 0)
+
+    fun countRestart(context: Context) =
+        prefs(context).edit().putInt(KEY_RESTARTS, restarts(context) + 1).apply()
+
+    /** Number of the current Monday-to-Sunday week in local time (1 Jan 1970 was a Thursday). */
+    private fun week(): Long {
+        val now = System.currentTimeMillis()
+        val day = Math.floorDiv(now + TimeZone.getDefault().getOffset(now), 86_400_000L)
+        return Math.floorDiv(day + 3, 7L)
+    }
 
     fun tipDismissed(context: Context): Boolean = prefs(context).getBoolean(KEY_TIP_DISMISSED, false)
 
@@ -153,19 +243,21 @@ object Prefs {
     fun setBatteryAsked(context: Context) =
         prefs(context).edit().putBoolean(KEY_BATTERY_ASKED, true).apply()
 
-    fun cooldownSeconds(context: Context): Int =
-        prefs(context).getInt(KEY_COOLDOWN, COOLDOWN_DEFAULT_S).coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)
+    fun cooldownSeconds(context: Context): Int = clampCooldown(prefs(context).getInt(KEY_COOLDOWN, COOLDOWN_DEFAULT_S))
+
+    fun clampCooldown(s: Int): Int = s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)
 
     /**
      * The cooldown that applies right now: the longest among the ticked apps, each
      * using its own cooldown or the one from Settings. The slowest app to reconnect
      * sets the pace, since every tap reconnects all of them.
      */
-    fun cooldownMs(context: Context): Long {
-        val global = cooldownSeconds(context)
-        val longest = checked(context).maxOfOrNull { targetCooldownSeconds(context, it) ?: global } ?: global
-        return longest * 1000L
-    }
+    fun cooldownMs(context: Context): Long =
+        cooldownMs(cooldownSeconds(context), checked(context).map { targetCooldownSeconds(context, it) })
+
+    /** [perApp] holds each ticked app's own cooldown in seconds, null where it uses [global]. */
+    fun cooldownMs(global: Int, perApp: List<Int?>): Long =
+        (perApp.maxOfOrNull { it ?: global } ?: global) * 1000L
 
     fun setCooldownSeconds(context: Context, s: Int) =
         prefs(context).edit().putInt(KEY_COOLDOWN, s.coerceIn(COOLDOWN_MIN_S, COOLDOWN_MAX_S)).apply()
@@ -248,11 +340,13 @@ object Prefs {
      * A random code, made once per install, that an automation broadcast must carry
      * as the extra "token". Only the automation app the user pasted it into knows it.
      */
+    /** Whether an automation broadcast's [given] token is this install's [expected] one. */
+    fun tokenMatches(given: String?, expected: String): Boolean =
+        given != null && MessageDigest.isEqual(given.toByteArray(), expected.toByteArray())
+
     fun automationToken(context: Context): String {
         prefs(context).getString(KEY_AUTOMATION_TOKEN, null)?.let { return it }
-        val chars = "abcdefghijkmnpqrstuvwxyz23456789"
-        val random = SecureRandom()
-        val token = String(CharArray(16) { chars[random.nextInt(chars.length)] })
+        val token = randomCode()
         prefs(context).edit().putString(KEY_AUTOMATION_TOKEN, token).apply()
         return token
     }

@@ -1,6 +1,5 @@
 package app.socketflip
 
-import android.graphics.Color
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
@@ -53,7 +52,8 @@ data class Look(
                 val s = v / 255.0
                 return if (s <= 0.03928) s / 12.92 else ((s + 0.055) / 1.055).pow(2.4)
             }
-            return 0.2126 * ch(Color.red(c)) + 0.7152 * ch(Color.green(c)) + 0.0722 * ch(Color.blue(c))
+            // Shifts rather than android.graphics.Color, so the unit tests run without Android.
+            return 0.2126 * ch((c shr 16) and 0xFF) + 0.7152 * ch((c shr 8) and 0xFF) + 0.0722 * ch(c and 0xFF)
         }
     }
 }

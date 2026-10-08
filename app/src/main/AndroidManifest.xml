@@ -36,7 +36,9 @@
     </queries>
 
     <application
-        android:allowBackup="false"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -73,6 +75,14 @@
                 <action android:name="app.socketflip.STOP" />
             </intent-filter>
         </receiver>
+
+        <!-- "Send the app": serves SocketFlip's own APK, read-only, to the one app the
+             user shares it with. Not exported; access comes only with that share. -->
+        <provider
+            android:name=".ApkProvider"
+            android:authorities="${applicationId}.apk"
+            android:exported="false"
+            android:grantUriPermissions="true" />
 
         <activity
             android:name=".SettingsActivity"

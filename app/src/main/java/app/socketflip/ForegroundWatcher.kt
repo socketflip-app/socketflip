@@ -3,17 +3,23 @@ package app.socketflip
 import android.app.AppOpsManager
 import android.app.usage.UsageEvents
 import android.app.usage.UsageStatsManager
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.os.Process
 
 /**
  * Follows which app is on screen, using Usage Access (Settings > Apps > Special
  * app access > Usage access). Only used for the two optional settings that need
  * it: showing the button over the target app only, and dropping the tunnel when
- * the target app is left. Polls about once a second, and only while one of them
- * is switched on.
+ * the target app is left. Polls about once a second, only while one of them is
+ * switched on, and not at all while the screen is off (nothing can come to the
+ * front then, and a steady poll with the screen off costs battery).
  */
 class ForegroundWatcher(private val context: Context, private val changed: (String) -> Unit) {
 
@@ -36,11 +42,23 @@ class ForegroundWatcher(private val context: Context, private val changed: (Stri
     private val handler = Handler(Looper.getMainLooper())
     private var front = UsageFront(context, LOOKBACK_MS)
     private var running = false
+    private var screenOn = true
 
     private val poll = object : Runnable {
         override fun run() {
             check()
-            if (running) handler.postDelayed(this, POLL_MS)
+            if (running && screenOn) handler.postDelayed(this, POLL_MS)
+        }
+    }
+
+    private val screen = object : BroadcastReceiver() {
+        override fun onReceive(c: Context, intent: Intent) {
+            val on = intent.action == Intent.ACTION_SCREEN_ON
+            if (on == screenOn || !running) return
+            screenOn = on
+            handler.removeCallbacks(poll)
+            // Straight away on wake: whatever was in front may have changed meanwhile.
+            if (on) handler.post(poll)
         }
     }
 
@@ -48,12 +66,26 @@ class ForegroundWatcher(private val context: Context, private val changed: (Stri
         if (running) return
         running = true
         front = UsageFront(context, LOOKBACK_MS)
-        handler.post(poll)
+        screenOn = context.getSystemService(PowerManager::class.java)?.isInteractive ?: true
+        val filter = IntentFilter(Intent.ACTION_SCREEN_ON).apply { addAction(Intent.ACTION_SCREEN_OFF) }
+        // Screen on/off are system broadcasts, so "not exported" still receives them.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            context.registerReceiver(screen, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            context.registerReceiver(screen, filter)
+        }
+        if (screenOn) handler.post(poll)
     }
 
     fun stop() {
+        if (!running) return
         running = false
         handler.removeCallbacks(poll)
+        try {
+            context.unregisterReceiver(screen)
+        } catch (e: IllegalArgumentException) {
+            // Not registered; nothing to undo.
+        }
     }
 
     private fun check() {

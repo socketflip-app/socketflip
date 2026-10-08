@@ -11,9 +11,9 @@ android {
         applicationId = "app.socketflip"
         minSdk = 29
         targetSdk = 35
-        versionCode = 16
-        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.12-test3".
-        versionName = "1.12" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
+        versionCode = 18
+        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.13-test3".
+        versionName = "1.13" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
     }
 
     // Release signing comes from ~/.gradle/gradle.properties (never the repo):
@@ -27,6 +27,10 @@ android {
             keyAlias = providers.gradleProperty("SOCKETFLIP_KEY_ALIAS").orElse("socketflip").get()
             keyPassword = providers.gradleProperty("SOCKETFLIP_KEY_PASSWORD")
                 .orElse(providers.gradleProperty("SOCKETFLIP_STORE_PASSWORD")).get()
+            // v3 alongside v2, same key: it is what lets the key be rotated later
+            // (with a lineage) without every install having to uninstall first.
+            enableV2Signing = true
+            enableV3Signing = true
         }
     }
 
@@ -52,9 +56,22 @@ android {
         checkReleaseBuilds = true
     }
 
+    // Kotlin's metadata files are never read at run time; about 8% of the APK.
+    packaging {
+        resources {
+            excludes += listOf("kotlin/**", "kotlin-tooling-metadata.json", "META-INF/*.version")
+        }
+    }
+
     // Leave out AGP's encrypted dependency blob so the APK rebuilds byte for byte.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
     }
+}
+
+// No runtime dependencies at all. JUnit is for the plain JVM unit tests only
+// (./gradlew testReleaseUnitTest) and never reaches the APK.
+dependencies {
+    testImplementation("junit:junit:4.13.2")
 }

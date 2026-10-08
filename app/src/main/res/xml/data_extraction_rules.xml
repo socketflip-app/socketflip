@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12 and later: the phone's backup and a move to a new phone carry
+     SocketFlip's settings file and nothing else. socketflip_device.xml stays behind
+     on purpose (see Prefs.forgetOtherPhone). -->
+<data-extraction-rules>
+    <cloud-backup>
+        <include domain="sharedpref" path="socketflip.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="sharedpref" path="socketflip.xml" />
+    </device-transfer>
+</data-extraction-rules>

@@ -8,6 +8,8 @@ import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.SystemClock
 import android.view.View
+import kotlin.math.PI
+import kotlin.math.sin
 
 /**
  * The round floating button, drawn by hand so it can show state:
@@ -36,6 +38,7 @@ class FlipButtonView(context: Context) : View(context) {
         }
 
     private var pressedUntil = 0L
+    private var pulseUntil = 0L
 
     private val icon: Drawable = context.getDrawable(R.drawable.ic_flip)!!.mutate().apply { setTint(look.iconColor) }
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
@@ -56,6 +59,12 @@ class FlipButtonView(context: Context) : View(context) {
         invalidate()
     }
 
+    /** Briefly swells the cooldown ring: "not yet", for a tap the cooldown refused. */
+    fun pulse() {
+        pulseUntil = SystemClock.elapsedRealtime() + PULSE_MS
+        invalidate()
+    }
+
     override fun onDraw(canvas: Canvas) {
         val now = SystemClock.elapsedRealtime()
         val p = preview
@@ -71,6 +80,7 @@ class FlipButtonView(context: Context) : View(context) {
         val cx = width / 2f
         val cy = height / 2f
         val stroke = size * 0.09f
+        val pulsing = p == null && now < pulseUntil
         fill.color = if (alarm) ALARM_COLOR else if (up) look.upColor else look.downColor
         canvas.drawCircle(cx, cy, size / 2f - stroke / 2f, fill)
 
@@ -90,18 +100,21 @@ class FlipButtonView(context: Context) : View(context) {
 
         if (ringLeft > 0f) {
             ring.color = look.ringColor
-            ring.strokeWidth = stroke
-            val inset = stroke / 2f
+            // A pulse thickens the ring inwards and back, once.
+            val swell = if (pulsing) sin(PI * (pulseUntil - now) / PULSE_MS).toFloat() else 0f
+            ring.strokeWidth = stroke * (1f + swell)
+            val inset = ring.strokeWidth / 2f
             arc.set(cx - size / 2f + inset, cy - size / 2f + inset, cx + size / 2f - inset, cy + size / 2f - inset)
             canvas.drawArc(arc, -90f, 360f * ringLeft, false, ring)
         }
 
         // Keep animating while something is changing; stop drawing once it settles.
-        if (p == null && (ringLeft > 0f || pressed)) postInvalidateOnAnimation()
+        if (p == null && (ringLeft > 0f || pressed || pulsing)) postInvalidateOnAnimation()
     }
 
     companion object {
         private const val FLASH_MS = 600L
+        private const val PULSE_MS = 300L
         private const val ALARM_COLOR = 0xFFD32F2F.toInt()
     }
 }

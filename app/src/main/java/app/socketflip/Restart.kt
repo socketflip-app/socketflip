@@ -70,6 +70,7 @@ object Restart {
             setBusy(false)
             return false
         }
+        Prefs.countRestart(context)
         val see = ForegroundWatcher.granted(context)
         // An hour back, so the app's own earlier resume is in the picture.
         val front = if (see) UsageFront(context, 60 * 60 * 1000L) else null

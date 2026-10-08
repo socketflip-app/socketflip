@@ -1,8 +1,8 @@
 # SocketFlip
 
-A floating button for Android that gives the apps you choose a clean, instant reconnect.
+A floating button for Android that gives one chosen app a clean, instant reconnect.
 
-Tap the button and Android closes the target apps' open network connections. Each
+Tap the button and Android closes the target app's open network connections. The
 app notices straight away and reconnects over your normal network, usually within
 a second or two. Nothing else on the phone is touched, and no traffic ever passes
 through SocketFlip.
@@ -98,6 +98,10 @@ such as Tasker can trigger a flip too, once you allow it in Settings (see the
 [guide](docs/GUIDE.md#other-ways-to-trigger-it)). Only one VPN can run on Android at a time,
 so SocketFlip will replace another VPN app's tunnel while its own is up.
 
+To give it to a friend, tap **Share SocketFlip** on the main screen: it sends the app
+itself (the same signed file as the release) over Quick Share or a chat app, or just
+the download link.
+
 ## Automatic updates
 
 SocketFlip is not on the Play Store, so it will not update itself. The easiest way
@@ -108,6 +112,10 @@ releases:
 1. Install Obtainium.
 2. Tap **Add App**, paste `https://github.com/socketflip-app/socketflip`, and tap
    **Add**.
+
+Without Obtainium, SocketFlip's About card tells you once your copy is more than 30
+days old (it knows from Android's install date, with no network check); tap
+**Updates** to look for a newer one.
 
 Obtainium then tells you when a new release is out. Every SocketFlip release is
 signed with the same key, so updates install over the top and keep your settings.
@@ -132,6 +140,13 @@ Requires JDK 17 and the Android SDK (platform 35).
 ```sh
 ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
+```
+
+Unit tests (plain JUnit on the JVM, no device needed; JUnit is a test-only
+dependency and the app itself has none):
+
+```sh
+./gradlew testReleaseUnitTest
 ```
 
 ## Disclaimer

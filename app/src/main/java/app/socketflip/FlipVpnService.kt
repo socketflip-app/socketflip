@@ -83,6 +83,15 @@ class FlipVpnService : VpnService() {
         }
 
         /**
+         * The network's IPv4 resolvers (the tunnel has an IPv4 address only, and a
+         * link-local one cannot be reached from it), or public ones if none are left.
+         * Pure, so the unit tests cover it.
+         */
+        fun pickDns(servers: List<InetAddress>): List<InetAddress> =
+            servers.filter { it is Inet4Address && !it.isLinkLocalAddress }
+                .ifEmpty { FALLBACK_DNS.map { InetAddress.getByName(it) } }
+
+        /**
          * True when a VPN other than SocketFlip is carrying this phone's traffic.
          * SocketFlip's own tunnel never covers SocketFlip itself, so any VPN seen
          * here belongs to another app, and bringing ours up will replace it.
@@ -222,7 +231,7 @@ class FlipVpnService : VpnService() {
         if (prepare(this) != null) {
             // Permission was there before, so something took it: almost always another
             // VPN app set as Always-on, which Android will not let SocketFlip replace.
-            problem(this, getString(if (Prefs.flips(this) > 0) R.string.vpn_taken else R.string.need_vpn))
+            problem(this, getString(if (Prefs.vpnWorked(this)) R.string.vpn_taken else R.string.need_vpn))
             return
         }
         val dns = dnsServers()
@@ -234,6 +243,7 @@ class FlipVpnService : VpnService() {
         } else {
             // It works now, so an earlier problem notification no longer applies.
             getSystemService(NotificationManager::class.java).cancel(PROBLEM_ID)
+            Prefs.setVpnWorked(this)
             watchNetwork(targets, dns)
         }
     }
@@ -276,7 +286,7 @@ class FlipVpnService : VpnService() {
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
                 if (tun == null) return
-                val fresh = usableDns(lp.dnsServers).ifEmpty { fallbackDns() }
+                val fresh = pickDns(lp.dnsServers)
                 if (sameDns(fresh, current)) return
                 Log.i(TAG, "network DNS changed, rebuilding tunnel")
                 try {
@@ -335,17 +345,12 @@ class FlipVpnService : VpnService() {
     private fun dnsServers(): List<InetAddress> {
         val current = try {
             val cm = getSystemService(ConnectivityManager::class.java)
-            usableDns(cm?.activeNetwork?.let { cm.getLinkProperties(it)?.dnsServers }.orEmpty())
+            cm?.activeNetwork?.let { cm.getLinkProperties(it)?.dnsServers }.orEmpty()
         } catch (e: SecurityException) {
             emptyList()
         }
-        return current.ifEmpty { fallbackDns() }
+        return pickDns(current)
     }
-
-    private fun usableDns(servers: List<InetAddress>) =
-        servers.filter { it is Inet4Address && !it.isLinkLocalAddress }
-
-    private fun fallbackDns() = FALLBACK_DNS.map { InetAddress.getByName(it) }
 
     /**
      * SocketFlip's tunnel carries no traffic, so as the Always-on VPN with "Block

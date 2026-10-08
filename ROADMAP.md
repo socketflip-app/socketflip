@@ -56,21 +56,21 @@ ship. Ideas and requests are welcome in the
 - [x] Errors leave a notification that opens the setup check, which can open a
       prefilled bug report (1.12)
 - [x] Adaptive launcher icon with a themed (monochrome) version (1.12)
+- [x] Send SocketFlip to a friend: the app itself, phone to phone, or the link (1.13)
+- [x] Your numbers: reconnects in total and this week, and restarts used, with a
+      Share button (counted on the phone only) (1.13)
+- [x] A note in the app when your copy is more than 30 days old (1.13)
+- [x] A quicker emergency restart question: two big buttons, Restart and Cancel (1.13)
+- [x] Press and hold only moves the button: it never counts as a tap (1.13)
+- [x] Clear "not yet" feedback for a tap the cooldown ignores (1.13)
+- [x] Settings kept in your phone's own backup, so a reinstall or a new phone keeps
+      your setup (1.13)
+- [x] Setup check row for the Xiaomi, Redmi and POCO permission emergency restart needs (1.13)
+- [x] Less battery use: following the app on screen pauses while the screen is off (1.13)
+- [x] Automatic tests for the core logic, checked before every release (1.13)
 
 ## Later
 
-- [ ] Send SocketFlip to a friend: the app itself, phone to phone, or the link
-- [ ] Your numbers: reconnects in total and this week, and restarts used, with a
-      Share button (counted on the phone only)
-- [ ] A note in the app when your copy is more than 30 days old
-- [ ] A quicker emergency restart question: two big buttons, Restart and Cancel
-- [ ] Press and hold only moves the button: it never counts as a tap
-- [ ] Clear "not yet" feedback for a tap the cooldown ignores
-- [ ] Settings kept in your phone's own backup, so a reinstall or a new phone keeps
-      your setup
-- [ ] Setup check row for the Xiaomi, Redmi and POCO permission emergency restart needs
-- [ ] Less battery use: following the app on screen pauses while the screen is off
-- [ ] Automatic tests for the core logic, checked before every release
 - [ ] Accessibility: TalkBack names and values for every setting and for the
       button's state, and text that is easier to read in light mode
 - [ ] Settings lead with the cooldown; resetting the look can be undone

@@ -96,6 +96,8 @@
     <string name="check_other_vpn_on">Another VPN is on. A tap that brings SocketFlip\'s tunnel up will switch it off.</string>
     <string name="check_other_vpn_off">None running.</string>
     <string name="check_battery">Battery optimisation</string>
+    <string name="check_xiaomi">Xiaomi: open new windows in the background</string>
+    <string name="check_xiaomi_detail">Android cannot tell SocketFlip whether this is allowed. Emergency restart needs it: tap Fix, then under Other permissions allow \"Open new windows while running in the background\".</string>
     <string name="check_battery_ok">SocketFlip is allowed to run in the background.</string>
     <string name="check_battery_limited">Your phone may close the floating button in the background to save battery.</string>
     <string name="check_button">Floating button</string>
@@ -168,11 +170,14 @@
     <string name="shortcut_show">Show button</string>
     <string name="shortcut_hide">Hide button</string>
     <string name="settings_emergency">Emergency restart</string>
-    <string name="settings_emergency_help">For the rare time an app stays stuck on its reconnecting screen. While the cooldown runs, the button turns into a red ! and a tap on it offers to restart the app. It always asks first.</string>
-    <string name="restart_title">Restart the app?</string>
-    <string name="restart_text">SocketFlip will close %1$s\'s screens and open it again. Most games start fresh. Use this if it is stuck on its reconnecting screen.</string>
+    <string name="settings_emergency_help">For the rare time an app stays stuck on its reconnecting screen. While the cooldown runs, the button turns into a red ! and a tap on it asks whether to restart the app: Restart or Cancel. It always asks first. If an app survives a restart, the button below opens its App info page with Force stop.</string>
+    <string name="restart_title">Restart %1$s?</string>
+    <string name="restart_pick_title">Restart which app?</string>
+    <string name="restart_app">Restart %1$s</string>
     <string name="restart_go">Restart</string>
+    <string name="restart_cancel">Cancel</string>
     <string name="restart_force">Open App info (Force stop)</string>
+    <string name="restart_force_pick">Which app?</string>
     <string name="restart_cannot_ask">SocketFlip could not ask first, so nothing was restarted. Close the app yourself, or use Force stop in its App info.</string>
     <string name="restart_failed">Could not restart %1$s. Open it from the home screen.</string>
     <string name="shortcut_setup_title">Finish setup to use your shortcut</string>
@@ -186,4 +191,23 @@
     <string name="notif_text_none">No app ticked: open SocketFlip to choose one.</string>
     <string name="action_flip">Flip now</string>
     <string name="action_stop">Stop</string>
+    <string name="numbers_title">Your numbers</string>
+    <string name="numbers_line">Reconnects: %1$s in total, %2$s this week\nEmergency restarts used: %3$s\nCounted on this phone only; SocketFlip sends nothing.</string>
+    <string name="numbers_share">Share</string>
+    <string name="numbers_share_chooser">Share your numbers</string>
+    <plurals name="numbers_share_text">
+        <item quantity="one">SocketFlip has reconnected my apps %1$s time. One tap, free and open source: %2$s</item>
+        <item quantity="other">SocketFlip has reconnected my apps %1$s times. One tap, free and open source: %2$s</item>
+    </plurals>
+    <string name="share_app">Share SocketFlip</string>
+    <string name="share_app_title">Give SocketFlip to a friend</string>
+    <string name="share_app_file">Send the app (the APK file)</string>
+    <string name="share_app_link">Send the download link</string>
+    <string name="share_app_file_text">SocketFlip: one tap gives an app a clean reconnect. Free and open source. Open the file to install it; more about it: %1$s</string>
+    <string name="share_app_link_text">SocketFlip: one tap gives an app a clean reconnect. Free, open source, no internet permission. Download: %1$s</string>
+    <plurals name="version_old">
+        <item quantity="one">You have version %1$s, and this copy is %2$d day old. Tap Updates to check for a newer one; SocketFlip never checks online by itself.</item>
+        <item quantity="other">You have version %1$s, and this copy is %2$d days old. Tap Updates to check for a newer one; SocketFlip never checks online by itself.</item>
+    </plurals>
+    <string name="obtainium_line">Tip: the free Obtainium app can tell you when a new version is out. Source code opens the README, which says how.</string>
 </resources>

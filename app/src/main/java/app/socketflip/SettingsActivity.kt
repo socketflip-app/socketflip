@@ -91,6 +91,8 @@ class SettingsActivity : Activity() {
         switch(R.string.settings_hints, Prefs.hints(this)) { Prefs.setHints(this, it) }
         switch(R.string.settings_emergency, Prefs.emergencyRestart(this)) { Prefs.setEmergencyRestart(this, it) }
         column.addView(ui.caption(getString(R.string.settings_emergency_help)))
+        // Force stop lives here, not in the restart question, which keeps to two choices.
+        column.addView(ui.textButton(getString(R.string.restart_force)) { openAppInfo() }, WRAP_CONTENT, WRAP_CONTENT)
 
         // The two settings that need Usage access sit together, with the warning
         // directly under them, so it is obvious which settings it is about.
@@ -387,6 +389,20 @@ class SettingsActivity : Activity() {
             setPadding(0, dp(8), 0, dp(8))
             setOnCheckedChangeListener { _, value -> changed(value) }
         }, MATCH_PARENT, WRAP_CONTENT)
+    }
+
+    /** App info (with Force stop) for the target app, asking which one when several are ticked. */
+    private fun openAppInfo() {
+        val targets = Prefs.checked(this).filter { packageManager.getLaunchIntentForPackage(it) != null }
+        when (targets.size) {
+            0 -> Toast.makeText(this, R.string.target_unset, Toast.LENGTH_SHORT).show()
+            1 -> Restart.appInfo(this, targets[0])
+            else -> AlertDialog.Builder(this)
+                .setTitle(R.string.restart_force_pick)
+                .setItems(targets.map { Prefs.label(this, it) }.toTypedArray()) { _, i -> Restart.appInfo(this, targets[i]) }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+        }
     }
 
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()

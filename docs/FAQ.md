@@ -134,11 +134,18 @@ browser...).
 
 If the app stays stuck and you would have to restart it anyway, turn on
 **Settings > Emergency restart**. While the cooldown runs, the button turns into a
-red **!**; tap it and SocketFlip asks whether to restart the app, then closes its
-screens and opens it again, and most games start fresh. If SocketFlip cannot ask,
-it restarts nothing. If an app survives that, **Open App info (Force stop)** opens
-its App info page with the Force stop button. (Android does not
-let one app force-stop another directly.)
+red **!**; tap it and SocketFlip asks "Restart (app name)?" with two big buttons,
+**Restart** and **Cancel** (Back or a tap outside also cancels). Restart closes the
+app's screens and opens it again, and most games start fresh. If SocketFlip cannot
+ask, it restarts nothing. If an app survives that, **Settings > Open App info
+(Force stop)** opens its App info page with the Force stop button. (Android does
+not let one app force-stop another directly.)
+
+On **Xiaomi, Redmi and POCO** phones the restart can do nothing at all until you
+allow **Settings > Apps > SocketFlip > Other permissions > Open new windows while
+running in the background** (the name varies a little between MIUI and HyperOS
+versions). Android cannot tell SocketFlip whether it is allowed, so **Check setup**
+shows a row for it on those phones, with a **Fix** button that opens the page.
 
 ### The floating button disappeared
 
@@ -165,15 +172,16 @@ bottom. Opacity never goes below 15%, so the button can always be found again.
 
 SocketFlip's tunnel is up. That does nothing to your traffic; the next tap removes
 it, and so does **Stop** on the notification. To have it go away by itself, turn on
-**Settings > Take the tunnel down when I leave the ticked apps**.
+**Settings > Take the tunnel down when I leave the target app**.
 
 ### "SocketFlip could not reconnect: ..."
 
 When a tap cannot reconnect, SocketFlip shows a short message and puts the full
 reason in a notification (the "Problems" channel); tap it to open **Check setup**.
 If the reason starts "SocketFlip could not reconnect:", something unexpected went wrong. Please open an issue with the exact message.
-**Check setup > Copy report** puts your phone model, Android version and every
-setting SocketFlip depends on onto the clipboard, ready to paste into the issue.
+**Check setup > Copy report** puts your phone model, Android version, how many
+reconnects and emergency restarts SocketFlip has done, and every setting it
+depends on onto the clipboard, ready to paste into the issue.
 It does not include the name of the app you chose, and there is no need to name
 it in the issue.
 
@@ -183,9 +191,9 @@ it in the issue.
 
 SocketFlip uses Android's VPN feature as a switch, not as a VPN. When a VPN covering
 an app starts or stops, Android closes that app's open connections. That is the
-reconnect. SocketFlip's tunnel covers only the apps you picked, claims one private
+reconnect. SocketFlip's tunnel covers only the app you picked, claims one private
 address that nothing uses (`10.111.222.2`), and routes nothing else. All of your
-traffic, including the target apps', goes out over Wi-Fi or mobile data as
+traffic, including the target app's, goes out over Wi-Fi or mobile data as
 normal. There is no server at the other end.
 
 ### Can SocketFlip see my traffic?
@@ -223,8 +231,8 @@ so it cannot slow anything down.
 ### Is it different from turning on airplane mode?
 
 Very. Airplane mode drops Wi-Fi and mobile data for the whole phone, and getting
-them back takes several seconds. SocketFlip touches only the apps you ticked and they
-reconnect at once. A per-app firewall block does not work either: it only stalls
+them back takes several seconds. SocketFlip touches only the one app and it
+reconnects at once. A per-app firewall block does not work either: it only stalls
 the connection, and a short stall is never noticed.
 
 ### Is it safe to use in online games?
@@ -250,6 +258,27 @@ bottom of SocketFlip's main screen, or go to
 in your browser; SocketFlip itself still has no internet permission. After your
 25th flip SocketFlip shows a one-time thank-you card; **Not now** hides it for
 good.
+
+### Do my settings survive a new phone or a reinstall?
+
+Yes, from 1.13, if your phone's backup is on (**Settings > Google > Backup**). The
+apps you tick, cooldowns, colours, skin, button position and your numbers are
+included in Android's own backup and in a move to a new phone. Permissions are not:
+on the new phone SocketFlip asks for them again, and it asks about battery and
+other VPNs again too, since those are about the phone, not about you. SocketFlip
+is not on the Play Store, so the new phone does not install it for you: install it
+from the releases page, and Android puts the settings back as it installs (with
+**Automatic restore** on, in the backup settings).
+
+### How do I give it to a friend?
+
+Open SocketFlip, tap **Share SocketFlip** at the bottom of the main screen, and
+pick **Send the app** to send the APK file itself over Quick Share, WhatsApp,
+Telegram or any app that takes files. It is the same file, with the same signature,
+as the release on GitHub, so your friend can update it from there later. Some apps
+(email in particular) refuse `.apk` files; then pick **Send the download link**.
+Your friend sees the same install warnings as anyone installing from outside the
+Play Store; the [install guide](GUIDE.md) walks through them.
 
 ### How do I report a problem or suggest something?
 

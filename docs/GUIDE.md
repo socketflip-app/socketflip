@@ -87,18 +87,24 @@ genuine one, see [How do I check the APK is genuine?](FAQ.md#how-do-i-check-the-
   is up. Both are fine: every tap switches it over, and either way is a reconnect.
 - An **amber ring** around the button counts down the cooldown. Taps before it
   runs out are ignored, on purpose: a second disconnect while the app is still
-  reconnecting can leave it stuck. The cooldown is 10 seconds; you can change it
+  reconnecting can leave it stuck. An ignored tap gives a short "no" buzz and the
+  ring pulses once (the buzz is Android 11 and later). The cooldown is 10 seconds; you can change it
   in **Settings**.
 - A **key icon** appears in the status bar after the first tap and disappears
   after the next. That is normal: every tap switches SocketFlip's tunnel on or off,
   and both directions cause the reconnect.
+- **Your numbers** on the main screen counts your reconnects (in total and this
+  week) and any emergency restarts. The count stays on your phone; **Share** sends
+  it as a line of text through any app you choose, and you see it before it goes.
 
 ### Emergency restart (optional)
 
 Very occasionally an app stays stuck on its reconnecting screen and needs a
 restart. Turn on **Settings > Emergency restart**: while the cooldown runs, the
-button turns into a red **!**, and tapping it asks whether to restart the app. It
-always asks first, so a stray tap never restarts anything.
+button turns into a red **!**, and tapping it asks "Restart (app name)?" with two
+big buttons, **Restart** and **Cancel**. It always asks first, so a stray tap never
+restarts anything; Back or a tap outside the question cancels. Press and hold only
+moves the button.
 
 ### Following the target app (optional)
 
@@ -166,9 +172,16 @@ same way as step 2. Your settings are kept. Every release is signed with the sam
 key, so Android accepts it as an update. If Android ever says the app "conflicts
 with an existing package", the file is **not** a genuine release; do not force it.
 
+Once your copy is more than 30 days old, the About card on SocketFlip's main screen
+says so and **Updates** turns bold. SocketFlip works that out from Android's install
+date; it never checks online.
+
 Tip: to be told about new releases automatically, add SocketFlip to
 [Obtainium](https://github.com/ImranR98/Obtainium) (see the
 [README](../README.md#automatic-updates)).
+
+To give SocketFlip to a friend, tap **Share SocketFlip** on the main screen: it
+sends the app itself (the same signed file) or the download link.
 
 ## 7. Uninstalling
 

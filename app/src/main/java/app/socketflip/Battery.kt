@@ -23,6 +23,35 @@ object Battery {
 
     val aggressiveMaker: Boolean get() = Build.MANUFACTURER.lowercase() in AGGRESSIVE
 
+    /**
+     * Xiaomi, Redmi and POCO (MIUI, HyperOS) add their own "Open new windows while
+     * running in the background" permission, off for sideloaded apps. Without it the
+     * emergency restart is dropped silently, and Android gives no way to read it.
+     */
+    val xiaomi: Boolean get() = Build.MANUFACTURER.lowercase() in setOf("xiaomi", "redmi", "poco")
+
+    /** MIUI's "Other permissions" page for this app, else Android's App info. */
+    fun openXiaomiPermissions(activity: Activity) {
+        val pkg = activity.packageName
+        val tries = listOf(
+            Intent("miui.intent.action.APP_PERM_EDITOR")
+                .setClassName("com.miui.securitycenter", "com.miui.permcenter.permissions.PermissionsEditorActivity")
+                .putExtra("extra_pkgname", pkg),
+            Intent("miui.intent.action.APP_PERM_EDITOR").putExtra("extra_pkgname", pkg),
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg")),
+        )
+        for (intent in tries) {
+            try {
+                activity.startActivity(intent)
+                return
+            } catch (e: ActivityNotFoundException) {
+                // Not this phone's page; try the next.
+            } catch (e: SecurityException) {
+                // Some MIUI versions do not let other apps open it.
+            }
+        }
+    }
+
     fun unrestricted(context: Context): Boolean =
         context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
 
