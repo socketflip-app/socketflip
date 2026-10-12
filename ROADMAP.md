@@ -68,18 +68,18 @@ ship. Ideas and requests are welcome in the
 - [x] Setup check row for the Xiaomi, Redmi and POCO permission emergency restart needs (1.13)
 - [x] Less battery use: following the app on screen pauses while the screen is off (1.13)
 - [x] Automatic tests for the core logic, checked before every release (1.13)
+- [x] Accessibility: TalkBack names and values for every setting and for the
+      button's state, and text that is easier to read in light mode (1.14)
+- [x] Settings lead with the cooldown; resetting the look can be undone (1.14)
+- [x] A bigger touch area around a small floating button, a colour picker that
+      works from black, and layouts that fit large text, tablets and landscape (1.14)
+- [x] Ready for translators: every piece of text in one file, and setup check
+      reports that stay in English (1.14)
+- [x] Built with current Android tools, targets Android 16 (1.14)
+- [x] Targets Android 17 (1.14)
 
 ## Later
 
-- [ ] Accessibility: TalkBack names and values for every setting and for the
-      button's state, and text that is easier to read in light mode
-- [ ] Settings lead with the cooldown; resetting the look can be undone
-- [ ] A bigger touch area around a small floating button, a colour picker that
-      works from black, and layouts that fit large text, tablets and landscape
-- [ ] Ready for translators: every piece of text in one file, and setup check
-      reports that stay in English
-- [ ] Built with current Android tools, targets Android 16
-- [ ] Targets Android 17
 - [ ] Translations, first German, Brazilian Portuguese, Spanish, French and
       Russian (help welcome)
 - [ ] Reproducible builds, so anyone can check the APK matches the source

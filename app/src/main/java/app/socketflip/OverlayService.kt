@@ -44,6 +44,8 @@ class OverlayService : Service() {
     private lateinit var wm: WindowManager
     private var button: FlipButtonView? = null
     private var params: WindowManager.LayoutParams? = null
+    /** Transparent touch area on each side of a button drawn smaller than [Look.MIN_TOUCH_DP]. */
+    private var edge = 0
     private val redraw: () -> Unit = { button?.invalidate() }
     // An emergency restart keeps the button shown until the app is back (see Restart.busy).
     private val restartChanged: () -> Unit = { setShown(shouldShow()) }
@@ -148,9 +150,11 @@ class OverlayService : Service() {
 
     private fun addButton() {
         val look = Prefs.look(this)
-        val size = px(look.sizeDp)
+        val size = windowSize(look)
+        edge = (size - px(look.sizeDp)) / 2
         val view = FlipButtonView(this).apply {
             this.look = look
+            drawSize = px(look.sizeDp)
             contentDescription = getString(R.string.action_flip)
         }
         val (x, y) = Prefs.position(this)
@@ -228,8 +232,9 @@ class OverlayService : Service() {
      */
     private fun keepOnScreen(lp: WindowManager.LayoutParams) {
         val screen = resources.displayMetrics
-        lp.x = lp.x.coerceIn(0, maxOf(0, screen.widthPixels - lp.width))
-        lp.y = lp.y.coerceIn(0, maxOf(0, screen.heightPixels - lp.height))
+        // The transparent edge of the touch area may go off screen; the drawn button may not.
+        lp.x = lp.x.coerceIn(-edge, maxOf(-edge, screen.widthPixels - lp.width + edge))
+        lp.y = lp.y.coerceIn(-edge, maxOf(-edge, screen.heightPixels - lp.height + edge))
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -335,7 +340,9 @@ class OverlayService : Service() {
         val lp = params ?: return
         val look = Prefs.look(this)
         view.look = look
-        val size = px(look.sizeDp)
+        view.drawSize = px(look.sizeDp)
+        val size = windowSize(look)
+        edge = (size - px(look.sizeDp)) / 2
         if (lp.width != size) {
             lp.width = size
             lp.height = size
@@ -351,7 +358,7 @@ class OverlayService : Service() {
     /** Slides the button to whichever side of the screen is nearer, then saves the spot. */
     private fun snap(view: View, lp: WindowManager.LayoutParams) {
         val screen = resources.displayMetrics.widthPixels
-        val target = if (lp.x + lp.width / 2 < screen / 2) 0 else screen - lp.width
+        val target = if (lp.x + lp.width / 2 < screen / 2) -edge else screen - lp.width + edge
         ValueAnimator.ofInt(lp.x, target).apply {
             duration = 180
             addUpdateListener {
@@ -370,6 +377,9 @@ class OverlayService : Service() {
     }
 
     private fun px(dp: Int) = (dp * resources.displayMetrics.density).toInt()
+
+    /** The window, and so the touch area: the button's size, but never under [Look.MIN_TOUCH_DP]. */
+    private fun windowSize(look: Look) = maxOf(px(look.sizeDp), px(Look.MIN_TOUCH_DP))
 
     private fun tapped(view: FlipButtonView) {
         val cooling = FlipVpnService.cooldownLeft(this) > 0f

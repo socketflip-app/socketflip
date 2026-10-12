@@ -6,8 +6,11 @@ import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.SystemClock
 import android.view.View
+import android.view.accessibility.AccessibilityNodeInfo
+import kotlin.math.ceil
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -31,9 +34,21 @@ class FlipButtonView(context: Context) : View(context) {
             invalidate()
         }
 
+    /**
+     * Diameter of the drawn button in px, centred; 0 fills the view. Never drawn
+     * bigger than the view, so a preview cell too narrow for it shows it smaller.
+     */
+    var drawSize: Int = 0
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     var preview: Preview? = null
         set(value) {
             field = value
+            // A preview is a picture; its caption says what it shows.
+            importantForAccessibility = if (value != null) IMPORTANT_FOR_ACCESSIBILITY_NO else IMPORTANT_FOR_ACCESSIBILITY_AUTO
             invalidate()
         }
 
@@ -76,7 +91,8 @@ class FlipButtonView(context: Context) : View(context) {
 
         alpha = if (pressed) look.pressedAlpha else look.idleAlpha
 
-        val size = minOf(width, height).toFloat()
+        val fits = minOf(width - paddingLeft - paddingRight, height - paddingTop - paddingBottom)
+        val size = (if (drawSize > 0) minOf(drawSize, fits) else fits).toFloat()
         val cx = width / 2f
         val cy = height / 2f
         val stroke = size * 0.09f
@@ -110,6 +126,32 @@ class FlipButtonView(context: Context) : View(context) {
 
         // Keep animating while something is changing; stop drawing once it settles.
         if (p == null && (ringLeft > 0f || pressed || pulsing)) postInvalidateOnAnimation()
+    }
+
+    /**
+     * Tells TalkBack the tunnel state and the cooldown left, worked out when it asks,
+     * so it is never stale. stateDescription is Android 11+; Android 10 hears it in the name.
+     */
+    // Taps arrive through OverlayService's touch listener, which calls this, so
+    // TalkBack's double-tap and a finger tap take the same path.
+    override fun performClick(): Boolean = super.performClick()
+
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        if (preview != null) return
+        val state = stateWords()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) info.stateDescription = state
+        else info.contentDescription = listOfNotNull(contentDescription, state).joinToString(", ")
+    }
+
+    private fun stateWords(): String {
+        val tunnel = context.getString(if (FlipVpnService.isUp) R.string.a11y_tunnel_up else R.string.a11y_tunnel_down)
+        val left = FlipVpnService.cooldownLeft(context)
+        if (left <= 0f) return tunnel
+        val s = ceil(left * Prefs.cooldownMs(context) / 1000.0).toInt()
+        val words = context.resources.getQuantityString(R.plurals.a11y_cooldown_left, s, tunnel, s)
+        // The red !: during the cooldown a tap offers the emergency restart.
+        return if (Prefs.emergencyRestart(context)) context.getString(R.string.a11y_restart, words) else words
     }
 
     companion object {

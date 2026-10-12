@@ -166,7 +166,7 @@ on **Snap to the screen edge** so it tucks itself against the side when you let 
 ### I made the button too faint or the wrong colour
 
 Open SocketFlip, tap **Settings**, and tap **Reset appearance to default** at the
-bottom. Opacity never goes below 15%, so the button can always be found again.
+end of the Appearance section. Opacity never goes below 15%, so the button can always be found again.
 
 ### A key icon stays in the status bar
 
@@ -181,7 +181,8 @@ reason in a notification (the "Problems" channel); tap it to open **Check setup*
 If the reason starts "SocketFlip could not reconnect:", something unexpected went wrong. Please open an issue with the exact message.
 **Check setup > Copy report** puts your phone model, Android version, how many
 reconnects and emergency restarts SocketFlip has done, and every setting it
-depends on onto the clipboard, ready to paste into the issue.
+depends on onto the clipboard, ready to paste into the issue. The report is always
+in English, whatever language your phone is in.
 It does not include the name of the app you chose, and there is no need to name
 it in the issue.
 

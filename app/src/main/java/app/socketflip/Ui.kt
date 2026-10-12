@@ -20,6 +20,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.TextView
 
 /**
@@ -39,6 +40,20 @@ fun View.padForSystemBars() = setOnApplyWindowInsetsListener { v, insets ->
         )
     }
     insets
+}
+
+/**
+ * Gives a slider a name and its value in words for TalkBack, which otherwise reads
+ * "seek bar, 12 percent" of the slider's range. stateDescription is Android 11+;
+ * Android 10 hears both in the name.
+ */
+fun SeekBar.describe(name: CharSequence, state: CharSequence) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        contentDescription = name
+        stateDescription = state
+    } else {
+        contentDescription = "$name, $state"
+    }
 }
 
 /**
@@ -65,20 +80,52 @@ fun Activity.explainVpnWarning(title: Int, onContinue: () -> Unit, onWhy: () -> 
 }
 
 /**
+ * Text and mark colours for light and dark mode. Every one is at least 4.5:1 (WCAG AA)
+ * on the card colour of its mode, which is the lower-contrast background in both modes;
+ * ContrastTest checks it.
+ */
+object Palette {
+    val LIGHT_CARD = 0xFFF1F2F5.toInt()
+    val DARK_CARD = 0xFF232428.toInt()
+    const val MIN_TEXT_CONTRAST = 4.5
+
+    fun card(night: Boolean) = if (night) DARK_CARD else LIGHT_CARD
+    fun warning(night: Boolean) = if (night) 0xFFEF6C00.toInt() else 0xFFB24D00.toInt()
+    fun good(night: Boolean) = if (night) 0xFF66BB6A.toInt() else 0xFF2E7D32.toInt()
+    fun bad(night: Boolean) = if (night) 0xFFFF8A80.toInt() else 0xFFC62828.toInt()
+    fun info(night: Boolean) = if (night) 0xFF9E9E9E.toInt() else 0xFF616161.toInt()
+
+    /** Behind the white labels of the settings preview; still mid-grey enough to show opacity. */
+    val PREVIEW_PANEL = 0xFF5F5F5F.toInt()
+
+    /**
+     * The phone theme's accent colours text buttons and section titles, so it must be
+     * readable on the card; some themes' accents are not, and get a fixed blue instead.
+     */
+    fun readableAccent(accent: Int, night: Boolean): Int =
+        if (Look.contrast(accent, card(night)) >= MIN_TEXT_CONTRAST) accent
+        else if (night) 0xFF90CAF9.toInt() else 0xFF1565C0.toInt()
+}
+
+/**
  * The few building blocks every screen uses: rounded cards, section titles,
  * a filled main button, quiet text buttons and captions. Plain platform views,
  * no support libraries, and colours that follow the phone's light or dark mode.
  */
 class Ui(private val context: Context) {
 
+    companion object {
+        const val MAX_CONTENT_DP = 600
+    }
+
     private val density = context.resources.displayMetrics.density
     private val night = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK ==
         Configuration.UI_MODE_NIGHT_YES
 
-    val accent: Int = TypedValue().let {
+    val accent: Int = Palette.readableAccent(TypedValue().let {
         if (context.theme.resolveAttribute(android.R.attr.colorAccent, it, true) && it.type >= TypedValue.TYPE_FIRST_COLOR_INT)
             it.data else 0xFF1E88E5.toInt()
-    }
+    }, night)
     /**
      * Text on the accent colour. Material You accents are often pale in dark mode,
      * so pick dark or light text by contrast rather than assuming white.
@@ -91,11 +138,21 @@ class Ui(private val context: Context) {
             if (it.resourceId != 0) context.getColorStateList(it.resourceId).defaultColor else it.data
         } else if (night) 0xFFFFFFFF.toInt() else 0xFF000000.toInt()
     }
-    val surface: Int = if (night) 0xFF232428.toInt() else 0xFFF1F2F5.toInt()
+    val surface: Int = Palette.card(night)
     val secondaryText: Int = if (night) 0xB3FFFFFF.toInt() else 0x99000000.toInt()
-    val warning: Int = 0xFFEF6C00.toInt()
+    val warning: Int = Palette.warning(night)
+    val good: Int = Palette.good(night)
+    val bad: Int = Palette.bad(night)
+    val info: Int = Palette.info(night)
 
     fun dp(v: Int) = (v * density).toInt()
+
+    /**
+     * Side padding for a screen's column: 16 dp, or more on a tablet or a phone in
+     * landscape, so the content is at most [MAX_CONTENT_DP] wide and centred rather than
+     * stretched edge to edge. Screens are recreated on rotation, so this is kept current.
+     */
+    fun sidePadding(): Int = dp(maxOf(16, (context.resources.configuration.screenWidthDp - MAX_CONTENT_DP) / 2))
 
     /** A rounded card holding one section. */
     fun card(): LinearLayout = LinearLayout(context).apply {

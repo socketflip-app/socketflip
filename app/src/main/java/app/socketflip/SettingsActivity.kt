@@ -29,6 +29,11 @@ import android.widget.Toast
 
 class SettingsActivity : Activity() {
 
+    companion object {
+        /** How long Reset appearance offers Undo. */
+        private const val UNDO_MS = 10_000L
+    }
+
     private lateinit var ui: Ui
     private lateinit var root: LinearLayout
 
@@ -44,12 +49,16 @@ class SettingsActivity : Activity() {
         ui = Ui(this)
         root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(24), dp(16), dp(24))
+            setPadding(ui.sidePadding(), dp(24), ui.sidePadding(), dp(24))
         }
         column = root
         root.addView(ui.title(getString(R.string.settings)).apply { setPadding(dp(4), 0, dp(4), dp(16)) })
-        appearance()
+        // What people come here to fix first (the cooldown), then the looks, then the
+        // rarely changed automation.
         behaviour()
+        following()
+        appearance()
+        automation()
         setContentView(ScrollView(this).apply {
             addView(root, MATCH_PARENT, WRAP_CONTENT)
             padForSystemBars()
@@ -62,20 +71,26 @@ class SettingsActivity : Activity() {
         val label = TextView(this).apply { setTextColor(ui.primaryText) }
         val warning = TextView(this).apply {
             text = getString(R.string.settings_cooldown_short)
-            setTextColor(0xFFEF6C00.toInt())
+            setTextColor(ui.warning)
         }
         fun show(s: Int) {
-            label.text = getString(R.string.settings_cooldown, s)
+            label.text = resources.getQuantityString(R.plurals.settings_cooldown, s, s)
             warning.visibility = if (s < Prefs.COOLDOWN_DEFAULT_S) View.VISIBLE else View.GONE
         }
+        lateinit var bar: SeekBar
+        fun describe(s: Int) = bar.describe(
+            getString(R.string.settings_cooldown_name), resources.getQuantityString(R.plurals.a11y_seconds, s, s),
+        )
         column.addView(label)
         column.addView(SeekBar(this).apply {
+            bar = this
             max = Prefs.COOLDOWN_MAX_S - Prefs.COOLDOWN_MIN_S
             progress = Prefs.cooldownSeconds(this@SettingsActivity) - Prefs.COOLDOWN_MIN_S
             setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
                 override fun onProgressChanged(bar: SeekBar, value: Int, fromUser: Boolean) {
                     val s = value + Prefs.COOLDOWN_MIN_S
                     show(s)
+                    describe(s)
                     if (fromUser) Prefs.setCooldownSeconds(this@SettingsActivity, s)
                 }
 
@@ -86,6 +101,7 @@ class SettingsActivity : Activity() {
         column.addView(warning)
         column.addView(ui.caption(getString(R.string.settings_cooldown_help)))
         show(Prefs.cooldownSeconds(this))
+        describe(Prefs.cooldownSeconds(this))
 
         switch(R.string.settings_haptics, Prefs.haptics(this)) { Prefs.setHaptics(this, it) }
         switch(R.string.settings_hints, Prefs.hints(this)) { Prefs.setHints(this, it) }
@@ -93,7 +109,9 @@ class SettingsActivity : Activity() {
         column.addView(ui.caption(getString(R.string.settings_emergency_help)))
         // Force stop lives here, not in the restart question, which keeps to two choices.
         column.addView(ui.textButton(getString(R.string.restart_force)) { openAppInfo() }, WRAP_CONTENT, WRAP_CONTENT)
+    }
 
+    private fun following() {
         // The two settings that need Usage access sit together, with the warning
         // directly under them, so it is obvious which settings it is about.
         heading(R.string.settings_follow_heading)
@@ -107,7 +125,7 @@ class SettingsActivity : Activity() {
             if (it) askForUsageAccess()
             refreshUsageNote()
         }
-        usageText = TextView(this).apply { setTextColor(0xFFEF6C00.toInt()) }
+        usageText = TextView(this).apply { setTextColor(ui.warning) }
         usageNote = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(4), 0, dp(8))
@@ -118,7 +136,9 @@ class SettingsActivity : Activity() {
             }, WRAP_CONTENT, WRAP_CONTENT)
         }
         column.addView(usageNote)
+    }
 
+    private fun automation() {
         heading(R.string.settings_automation_heading)
         switch(R.string.settings_automation, Prefs.automation(this)) { Prefs.setAutomation(this, it) }
         column.addView(ui.caption(getString(R.string.settings_automation_help)).apply { setTextIsSelectable(true) })
@@ -185,7 +205,7 @@ class SettingsActivity : Activity() {
         look = Prefs.look(this)
         heading(R.string.settings_appearance)
 
-        // Live preview on a mid-grey panel, so the opacity settings are visible.
+        // Live preview on a grey panel, so the opacity settings are visible.
         val previews = listOf(
             R.string.look_preview_ready to FlipButtonView.Preview(up = false, ringFraction = 0f),
             R.string.look_preview_up to FlipButtonView.Preview(up = true, ringFraction = 0f),
@@ -196,10 +216,12 @@ class SettingsActivity : Activity() {
             orientation = LinearLayout.HORIZONTAL
             background = GradientDrawable().apply {
                 cornerRadius = dp(12).toFloat()
-                setColor(0xFF808080.toInt())
+                setColor(Palette.PREVIEW_PANEL)
             }
             setPadding(dp(4), dp(12), dp(4), dp(12))
         }
+        val scaled = ui.caption(getString(R.string.look_preview_scaled)).apply { setPadding(0, dp(8), 0, 0) }
+        val boxes = mutableListOf<FrameLayout>()
         previews.forEach { (label, state) ->
             val cell = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
@@ -207,7 +229,8 @@ class SettingsActivity : Activity() {
             }
             val box = FrameLayout(this)
             val view = FlipButtonView(this).apply { preview = state }
-            box.addView(view, FrameLayout.LayoutParams(0, 0, Gravity.CENTER))
+            box.addView(view, FrameLayout.LayoutParams(MATCH_PARENT, MATCH_PARENT))
+            boxes += box
             cell.addView(box, LinearLayout.LayoutParams(MATCH_PARENT, dp(Look.MAX_SIZE_DP)))
             cell.addView(TextView(this).apply {
                 text = getString(label)
@@ -218,11 +241,18 @@ class SettingsActivity : Activity() {
             panel.addView(cell, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
             refreshers += {
                 view.look = look
-                val size = dp(look.sizeDp)
-                view.layoutParams = FrameLayout.LayoutParams(size, size, Gravity.CENTER)
+                view.drawSize = dp(look.sizeDp)
             }
         }
         column.addView(panel, MATCH_PARENT, WRAP_CONTENT)
+        // On a narrow phone a quarter of the panel is less than the largest sizes.
+        val checkScaled = {
+            val cell = boxes[0].width
+            scaled.visibility = if (cell > 0 && dp(look.sizeDp) > cell) View.VISIBLE else View.GONE
+        }
+        column.addView(scaled)
+        boxes[0].addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> boxes[0].post(checkScaled) }
+        refreshers += checkScaled
 
         val contrast = ui.caption(getString(R.string.look_low_contrast)).apply {
             setTextColor(ui.warning)
@@ -248,18 +278,54 @@ class SettingsActivity : Activity() {
         refreshers += { mirror.isChecked = look.mirrorIcon }
 
         val minPercent = (Look.MIN_ALPHA * 100).toInt()
-        slider(R.string.look_idle_alpha, minPercent, 100, { (it.idleAlpha * 100).toInt() }) { l, v ->
+        val percent = { v: Int -> resources.getQuantityString(R.plurals.a11y_percent, v, v) }
+        slider(R.string.look_idle_alpha, R.string.look_idle_alpha_name, minPercent, 100, percent, { (it.idleAlpha * 100).toInt() }) { l, v ->
             l.copy(idleAlpha = v / 100f)
         }
-        slider(R.string.look_pressed_alpha, minPercent, 100, { (it.pressedAlpha * 100).toInt() }) { l, v ->
+        slider(R.string.look_pressed_alpha, R.string.look_pressed_alpha_name, minPercent, 100, percent, { (it.pressedAlpha * 100).toInt() }) { l, v ->
             l.copy(pressedAlpha = v / 100f)
         }
-        slider(R.string.look_size, Look.MIN_SIZE_DP, Look.MAX_SIZE_DP, { it.sizeDp }) { l, v -> l.copy(sizeDp = v) }
+        // Shown as a share of the default size: players do not think in dp.
+        val sizePercent = { dp: Int -> Math.round(dp * 100f / Look.DEFAULT.sizeDp) }
+        slider(
+            R.string.look_size, R.string.look_size_name, Look.MIN_SIZE_DP, Look.MAX_SIZE_DP,
+            { sizePercent(it).let { p -> resources.getQuantityString(R.plurals.a11y_size, p, p) } }, { it.sizeDp }, sizePercent,
+        ) { l, v ->
+            l.copy(sizeDp = v)
+        }
 
         switch(R.string.look_snap, Prefs.snapToEdge(this)) { Prefs.setSnapToEdge(this, it) }
-        column.addView(ui.textButton(getString(R.string.look_reset)) { update(Look.DEFAULT) }, WRAP_CONTENT, WRAP_CONTENT)
+        resetButton()
 
         refreshers.forEach { it() }
+    }
+
+    /**
+     * Reset applies at once, so for a while it turns into Undo: a stray tap next to the
+     * sliders must not cost someone their own look.
+     */
+    private fun resetButton() {
+        var previous: Look? = null
+        lateinit var button: Button
+        val expire = Runnable {
+            previous = null
+            button.setText(R.string.look_reset)
+        }
+        button = ui.textButton(getString(R.string.look_reset)) {
+            previous?.let {
+                button.removeCallbacks(expire)
+                expire.run()
+                update(it)
+                return@textButton
+            }
+            if (look == Look.DEFAULT) return@textButton
+            previous = look
+            update(Look.DEFAULT)
+            button.setText(R.string.look_reset_undo)
+            Toast.makeText(this, R.string.look_reset_done, Toast.LENGTH_LONG).show()
+            button.postDelayed(expire, UNDO_MS)
+        }
+        column.addView(button, WRAP_CONTENT, WRAP_CONTENT)
     }
 
     /** A sideways-scrolling row of ready-made looks; tap one to use it. */
@@ -273,6 +339,7 @@ class SettingsActivity : Activity() {
                 gravity = Gravity.CENTER_HORIZONTAL
                 setPadding(dp(8), dp(8), dp(8), dp(8))
                 isClickable = true
+                contentDescription = getString(skin.name)
                 setOnClickListener { update(skin.look) }
             }
             val swatch = FrameLayout(this).apply {
@@ -299,7 +366,7 @@ class SettingsActivity : Activity() {
             swatch.addView(pair)
             tile.addView(swatch)
             val name = TextView(this).apply {
-                text = skin.name
+                text = getString(skin.name)
                 gravity = Gravity.CENTER
                 setPadding(0, dp(6), 0, 0)
             }
@@ -307,6 +374,8 @@ class SettingsActivity : Activity() {
             strip.addView(tile)
             refreshers += {
                 val selected = look == skin.look
+                // Announced by TalkBack, which cannot see the outline.
+                tile.isSelected = selected
                 (swatch.background as GradientDrawable).setStroke(if (selected) dp(3) else 0, ui.accent)
                 name.setTextColor(if (selected) ui.accent else ui.secondaryText)
                 name.setTypeface(null, if (selected) Typeface.BOLD else Typeface.NORMAL)
@@ -347,10 +416,18 @@ class SettingsActivity : Activity() {
             }
         }
         column.addView(row, MATCH_PARENT, WRAP_CONTENT)
-        refreshers += { swatch.setColor(get(look)) }
+        refreshers += {
+            val c = get(look)
+            swatch.setColor(c)
+            row.contentDescription = getString(R.string.a11y_colour_row, getString(res), String.format("#%06X", c and 0xFFFFFF))
+        }
     }
 
-    private fun slider(res: Int, min: Int, max: Int, get: (Look) -> Int, set: (Look, Int) -> Look) {
+    /** [name] and [words] are for TalkBack: the setting without its value, and the value in words. */
+    private fun slider(
+        res: Int, name: Int, min: Int, max: Int, words: (Int) -> String, get: (Look) -> Int,
+        shown: (Int) -> Int = { it }, set: (Look, Int) -> Look,
+    ) {
         val label = TextView(this).apply {
             setPadding(0, dp(12), 0, 0)
             setTextColor(ui.primaryText)
@@ -370,8 +447,9 @@ class SettingsActivity : Activity() {
         column.addView(bar, MATCH_PARENT, WRAP_CONTENT)
         refreshers += {
             val v = get(look)
-            label.text = getString(res, v)
+            label.text = getString(res, shown(v))
             bar.progress = v - min
+            bar.describe(getString(name), words(v))
         }
     }
 

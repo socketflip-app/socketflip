@@ -1,19 +1,20 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "app.socketflip"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "app.socketflip"
         minSdk = 29
-        targetSdk = 35
-        versionCode = 18
-        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.13-test3".
-        versionName = "1.13" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
+        targetSdk = 37
+        versionCode = 21
+        // Test builds: ./gradlew assembleRelease -PtestBuild=3 gives "1.14-test3".
+        versionName = "1.14" + (providers.gradleProperty("testBuild").orNull?.let { "-test$it" } ?: "")
     }
 
     // Release signing comes from ~/.gradle/gradle.properties (never the repo):
@@ -38,16 +39,22 @@ android {
         release {
             signingConfig = releaseSigning
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
+        }
+    }
+
+    // No app bundles: the APK carries every language, and the setup check report
+    // switches to English on purpose.
+    bundle {
+        language {
+            enableSplit = false
         }
     }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = "17"
     }
 
     // Fail the release build on any call above minSdk, so nothing Android 11 only reaches Android 10.
@@ -67,6 +74,12 @@ android {
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
     }
 }
 

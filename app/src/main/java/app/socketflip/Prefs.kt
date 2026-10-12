@@ -1,5 +1,6 @@
 package app.socketflip
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -85,6 +86,8 @@ object Prefs {
      * restore (the settings carry another install's id) from an upgrade (no id yet),
      * and after a restore those keys are dropped so this phone asks for itself.
      */
+    // commit, not apply: both files must be on disk before anything else reads them.
+    @SuppressLint("ApplySharedPref")
     @Synchronized
     private fun forgetOtherPhone(context: Context, p: SharedPreferences) {
         if (restoreChecked) return

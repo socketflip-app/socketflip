@@ -9,6 +9,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -22,6 +23,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import java.util.Locale
 
 /**
  * One screen that answers "why is it not working?": every permission and setting
@@ -30,11 +32,20 @@ import android.widget.Toast
  */
 class CheckActivity : Activity() {
 
-    private enum class Level(val mark: String, val color: Int) {
-        OK("✓", 0xFF2E7D32.toInt()),
-        WARN("!", 0xFFEF6C00.toInt()),
-        BAD("✗", 0xFFC62828.toInt()),
-        INFO("•", 0xFF757575.toInt()),
+    /** [words] is what TalkBack says instead of reading the mark as a symbol. */
+    private enum class Level(val mark: String, val words: Int) {
+        OK("✓", R.string.check_level_ok),
+        WARN("!", R.string.check_level_warn),
+        BAD("✗", R.string.check_level_bad),
+        INFO("•", R.string.check_level_info),
+    }
+
+    /** Per light or dark mode, so every mark stays readable on the card. */
+    private fun Level.color(ui: Ui): Int = when (this) {
+        Level.OK -> ui.good
+        Level.WARN -> ui.warning
+        Level.BAD -> ui.bad
+        Level.INFO -> ui.info
     }
 
     companion object {
@@ -44,23 +55,35 @@ class CheckActivity : Activity() {
         private const val UNSEEN_CANCEL_MS = 500L
     }
 
-    /** [report] is what Copy report writes; it defaults to [detail] but never carries app names. */
+    /**
+     * [report] is what Copy report writes: always in English, so bug reports stay
+     * readable whatever language the phone is in, and never carrying app names.
+     */
     private class Item(
-        val level: Level, val title: String, val detail: String,
-        val report: String = detail, val fix: (() -> Unit)? = null,
+        val level: Level, val title: Int, val detail: String,
+        val report: String, val fix: (() -> Unit)? = null,
     )
+
+    /** Shown in the phone's language, reported in English. */
+    private fun item(level: Level, title: Int, detail: Int, fix: (() -> Unit)? = null) =
+        Item(level, title, getString(detail), english.getString(detail), fix)
+
+    private val english by lazy {
+        createConfigurationContext(Configuration(resources.configuration).apply { setLocale(Locale.ENGLISH) })
+    }
 
     private var consentAskedAt = 0L
 
+    private lateinit var ui: Ui
     private lateinit var list: LinearLayout
     private var items: List<Item> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val ui = Ui(this)
+        ui = Ui(this)
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(24), dp(16), dp(24))
+            setPadding(ui.sidePadding(), dp(24), ui.sidePadding(), dp(24))
         }
         column.addView(ui.title(getString(R.string.check_title)))
         column.addView(ui.caption(getString(R.string.check_intro)).apply { setPadding(dp(4), dp(4), dp(4), dp(16)) })
@@ -87,7 +110,7 @@ class CheckActivity : Activity() {
         val missing = ticked.filterNot { installed(it) }
         add(
             when {
-                ticked.isEmpty() -> Item(Level.BAD, getString(R.string.check_target), getString(R.string.check_target_none)) {
+                ticked.isEmpty() -> item(Level.BAD, R.string.check_target, R.string.check_target_none) {
                     // Straight to the app list (or the targets, if some are just unticked).
                     open(
                         Intent(this@CheckActivity, MainActivity::class.java)
@@ -97,22 +120,22 @@ class CheckActivity : Activity() {
                     finish()
                 }
                 missing.isNotEmpty() -> Item(
-                    Level.WARN, getString(R.string.check_target),
+                    Level.WARN, R.string.check_target,
                     getString(R.string.check_target_missing, missing.joinToString(", ")),
-                    report = getString(R.string.check_target_report_missing, ticked.size, missing.size),
+                    report = english.resources.getQuantityString(R.plurals.check_target_report_missing, ticked.size, ticked.size, missing.size),
                 ) { finish() }
                 // The report is pasted into public bug reports, so it gives counts, never
                 // which apps.
                 else -> Item(
-                    Level.OK, getString(R.string.check_target), Prefs.checkedLabels(this@CheckActivity),
-                    report = getString(R.string.check_target_report_n, ticked.size),
+                    Level.OK, R.string.check_target, Prefs.checkedLabels(this@CheckActivity),
+                    report = english.resources.getQuantityString(R.plurals.check_target_report_n, ticked.size, ticked.size),
                 )
             }
         )
 
         add(
-            if (Settings.canDrawOverlays(this@CheckActivity)) Item(Level.OK, getString(R.string.check_overlay), getString(R.string.check_allowed))
-            else Item(Level.BAD, getString(R.string.check_overlay), getString(R.string.check_overlay_off)) {
+            if (Settings.canDrawOverlays(this@CheckActivity)) item(Level.OK, R.string.check_overlay, R.string.check_allowed)
+            else item(Level.BAD, R.string.check_overlay, R.string.check_overlay_off) {
                 open(Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")))
             }
         )
@@ -121,8 +144,8 @@ class CheckActivity : Activity() {
             (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
         add(
-            if (notifyOk) Item(Level.OK, getString(R.string.check_notify), getString(R.string.check_allowed))
-            else Item(Level.WARN, getString(R.string.check_notify), getString(R.string.check_notify_off)) {
+            if (notifyOk) item(Level.OK, R.string.check_notify, R.string.check_allowed)
+            else item(Level.WARN, R.string.check_notify, R.string.check_notify_off) {
                 open(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
             }
         )
@@ -131,10 +154,10 @@ class CheckActivity : Activity() {
         // permission, so it is only asked when no other VPN is on.
         val otherVpn = FlipVpnService.otherVpnActive(this@CheckActivity)
         add(
-            if (otherVpn) Item(Level.INFO, getString(R.string.check_vpn), getString(R.string.check_vpn_later))
+            if (otherVpn) item(Level.INFO, R.string.check_vpn, R.string.check_vpn_later)
             else VpnService.prepare(this@CheckActivity).let { consent ->
-                if (consent == null) Item(Level.OK, getString(R.string.check_vpn), getString(R.string.check_allowed))
-                else Item(Level.BAD, getString(R.string.check_vpn), getString(R.string.check_vpn_off)) {
+                if (consent == null) item(Level.OK, R.string.check_vpn, R.string.check_allowed)
+                else item(Level.BAD, R.string.check_vpn, R.string.check_vpn_off) {
                     explainVpnWarning(R.string.vpn_next_title, { askVpn(consent) })
                 }
             }
@@ -142,14 +165,14 @@ class CheckActivity : Activity() {
 
         add(
             when (alwaysOnApp()) {
-                null -> Item(Level.INFO, getString(R.string.check_always_on), getString(R.string.check_always_on_unknown)) {
+                null -> item(Level.INFO, R.string.check_always_on, R.string.check_always_on_unknown) {
                     open(Intent(Settings.ACTION_VPN_SETTINGS))
                 }
-                packageName -> Item(Level.BAD, getString(R.string.check_always_on), getString(R.string.always_on_lockdown)) {
+                packageName -> item(Level.BAD, R.string.check_always_on, R.string.always_on_lockdown) {
                     open(Intent(Settings.ACTION_VPN_SETTINGS))
                 }
-                "" -> Item(Level.OK, getString(R.string.check_always_on), getString(R.string.check_always_on_none))
-                else -> Item(Level.WARN, getString(R.string.check_always_on), getString(R.string.check_always_on_other)) {
+                "" -> item(Level.OK, R.string.check_always_on, R.string.check_always_on_none)
+                else -> item(Level.WARN, R.string.check_always_on, R.string.check_always_on_other) {
                     open(Intent(Settings.ACTION_VPN_SETTINGS))
                 }
             }
@@ -157,8 +180,8 @@ class CheckActivity : Activity() {
 
         add(
             if (otherVpn)
-                Item(Level.WARN, getString(R.string.check_other_vpn), getString(R.string.check_other_vpn_on))
-            else Item(Level.OK, getString(R.string.check_other_vpn), getString(R.string.check_other_vpn_off))
+                item(Level.WARN, R.string.check_other_vpn, R.string.check_other_vpn_on)
+            else item(Level.OK, R.string.check_other_vpn, R.string.check_other_vpn_off)
         )
 
         // Only a warning on the makers known to close background apps; the main screen
@@ -166,12 +189,12 @@ class CheckActivity : Activity() {
         add(
             when {
                 Battery.unrestricted(this@CheckActivity) ->
-                    Item(Level.OK, getString(R.string.check_battery), getString(R.string.check_battery_ok))
+                    item(Level.OK, R.string.check_battery, R.string.check_battery_ok)
                 Battery.aggressiveMaker ->
-                    Item(Level.WARN, getString(R.string.check_battery), getString(R.string.check_battery_limited)) {
+                    item(Level.WARN, R.string.check_battery, R.string.check_battery_limited) {
                         Battery.request(this@CheckActivity)
                     }
-                else -> Item(Level.INFO, getString(R.string.check_battery), getString(R.string.check_battery_info)) {
+                else -> item(Level.INFO, R.string.check_battery, R.string.check_battery_info) {
                     Battery.request(this@CheckActivity)
                 }
             }
@@ -180,9 +203,9 @@ class CheckActivity : Activity() {
         // Cannot be read, so never green: a warning while emergency restart relies on it.
         if (Battery.xiaomi) {
             add(
-                Item(
+                item(
                     if (Prefs.emergencyRestart(this@CheckActivity)) Level.WARN else Level.INFO,
-                    getString(R.string.check_xiaomi), getString(R.string.check_xiaomi_detail),
+                    R.string.check_xiaomi, R.string.check_xiaomi_detail,
                 ) { Battery.openXiaomiPermissions(this@CheckActivity) }
             )
         }
@@ -190,24 +213,18 @@ class CheckActivity : Activity() {
         if (Prefs.onlyOverTarget(this@CheckActivity) || Prefs.dropOnLeave(this@CheckActivity)) {
             add(
                 if (ForegroundWatcher.granted(this@CheckActivity))
-                    Item(Level.OK, getString(R.string.check_usage), getString(R.string.check_usage_on))
-                else Item(Level.WARN, getString(R.string.check_usage), getString(R.string.check_usage_off)) {
+                    item(Level.OK, R.string.check_usage, R.string.check_usage_on)
+                else item(Level.WARN, R.string.check_usage, R.string.check_usage_off) {
                     open(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 }
             )
         }
 
         add(
-            Item(
-                Level.INFO, getString(R.string.check_button),
-                getString(if (OverlayService.running) R.string.check_on else R.string.check_off)
-            )
+            item(Level.INFO, R.string.check_button, if (OverlayService.running) R.string.check_on else R.string.check_off)
         )
         add(
-            Item(
-                Level.INFO, getString(R.string.check_tunnel),
-                getString(if (FlipVpnService.isUp) R.string.check_on else R.string.check_off)
-            )
+            item(Level.INFO, R.string.check_tunnel, if (FlipVpnService.isUp) R.string.check_on else R.string.check_off)
         )
     }
 
@@ -216,23 +233,25 @@ class CheckActivity : Activity() {
         setPadding(0, dp(8), 0, dp(8))
         addView(TextView(context).apply {
             text = item.level.mark
-            setTextColor(item.level.color)
+            setTextColor(item.level.color(ui))
+            contentDescription = getString(item.level.words)
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 20f)
             minWidth = dp(32)
         })
         addView(LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             addView(TextView(context).apply {
-                text = item.title
+                text = getString(item.title)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, 16f)
-                setTextColor(Ui(context).primaryText)
+                setTextColor(ui.primaryText)
             })
             addView(TextView(context).apply {
                 text = item.detail
-                alpha = 0.75f
+                // Not the theme colour faded: that measured 2.6:1 on the light card.
+                setTextColor(ui.secondaryText)
             })
             item.fix?.let { fix ->
-                addView(Ui(context).textButton(getString(R.string.check_fix)) { fix() }, WRAP_CONTENT, WRAP_CONTENT)
+                addView(ui.textButton(getString(R.string.check_fix)) { fix() }, WRAP_CONTENT, WRAP_CONTENT)
             }
         }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
     }
@@ -240,7 +259,7 @@ class CheckActivity : Activity() {
     private fun reportText(): String = buildString {
         appendLine("SocketFlip ${versionName()}")
         appendLine("${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
-        items.forEach { appendLine("${it.level.mark} ${it.title}: ${it.report}") }
+        items.forEach { appendLine("${it.level.mark} ${english.getString(it.title)}: ${it.report}") }
         val ctx = this@CheckActivity
         appendLine("Reconnects: ${Prefs.flips(ctx)} in total, ${Prefs.flipsThisWeek(ctx)} this week; emergency restarts: ${Prefs.restarts(ctx)}")
     }

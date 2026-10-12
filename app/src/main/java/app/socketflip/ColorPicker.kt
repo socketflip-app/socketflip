@@ -21,6 +21,7 @@ import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.SeekBar
 import android.widget.TextView
 import kotlin.math.atan2
@@ -68,7 +69,9 @@ class ColorWheelView(context: Context) : View(context) {
         val cx = width / 2f
         val cy = height / 2f
         canvas.drawCircle(cx, cy, radius, wheel)
-        shade.color = Color.argb(((1f - hsv[2]) * 255).toInt(), 0, 0, 0)
+        // Never fully black: starting from black (two skins use it), the hues must
+        // still show, so it is clear this is a wheel to pick from.
+        shade.color = Color.argb((min(1f - hsv[2], MAX_SHADE) * 255).toInt(), 0, 0, 0)
         canvas.drawCircle(cx, cy, radius, shade)
 
         val a = Math.toRadians(hsv[0].toDouble())
@@ -93,12 +96,20 @@ class ColorWheelView(context: Context) : View(context) {
                 if (angle < 0) angle += 360f
                 hsv[0] = angle
                 hsv[1] = (hypot(dx, dy) / radius).coerceIn(0f, 1f)
+                // Picking a hue on a black or nearly black colour would change nothing
+                // visible, so the first touch brings the brightness up too.
+                if (hsv[2] < DARK) hsv[2] = 1f
                 invalidate()
                 onChange?.invoke()
                 return true
             }
         }
         return super.onTouchEvent(e)
+    }
+
+    private companion object {
+        const val DARK = 0.15f
+        const val MAX_SHADE = 0.8f
     }
 }
 
@@ -116,9 +127,17 @@ object ColorPicker {
         swatch.background = swatchBg
         val brightness = SeekBar(context).apply { max = 100 }
         val hex = EditText(context).apply {
+            id = View.generateViewId()
             filters = arrayOf(InputFilter.LengthFilter(7), InputFilter.AllCaps())
             isSingleLine = true
+            hint = "#1E88E5"
         }
+        // The wheel is drag only, so TalkBack skips it; Brightness and the colour code
+        // below it pick any colour.
+        wheel.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        fun describeBrightness() = brightness.describe(
+            context.getString(R.string.look_brightness), context.resources.getQuantityString(R.plurals.a11y_percent, brightness.progress, brightness.progress),
+        )
 
         fun current() = Color.HSVToColor(wheel.hsv)
         var updatingHex = false
@@ -132,9 +151,14 @@ object ColorPicker {
                 updatingHex = false
             }
             wheel.invalidate()
+            describeBrightness()
         }
 
-        wheel.onChange = { refresh() }
+        wheel.onChange = {
+            // The wheel may have raised the brightness (see ColorWheelView.onTouchEvent).
+            brightness.progress = (wheel.hsv[2] * 100).toInt()
+            refresh()
+        }
         brightness.progress = (wheel.hsv[2] * 100).toInt()
         brightness.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(bar: SeekBar, value: Int, fromUser: Boolean) {
@@ -170,6 +194,11 @@ object ColorPicker {
                 setPadding(0, dp(12), 0, 0)
             })
             addView(brightness, MATCH_PARENT, WRAP_CONTENT)
+            addView(TextView(context).apply {
+                text = context.getString(R.string.look_hex)
+                labelFor = hex.id
+                setPadding(0, dp(12), 0, 0)
+            })
             addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(0, dp(8), 0, 0)
@@ -181,7 +210,8 @@ object ColorPicker {
 
         AlertDialog.Builder(context)
             .setTitle(title)
-            .setView(layout)
+            // Scrolls on a small phone in landscape, or with the keyboard open for the code.
+            .setView(ScrollView(context).apply { addView(layout) })
             .setPositiveButton(android.R.string.ok) { _, _ -> picked(current()) }
             .setNegativeButton(android.R.string.cancel, null)
             .show()

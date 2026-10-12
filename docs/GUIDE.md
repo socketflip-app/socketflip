@@ -118,15 +118,16 @@ SocketFlip asks for when you turn one on:
 
 ### Making it your own
 
-Open **Settings**. At the top, a preview shows the button in every state as you
-change things.
+Open **Settings** and scroll past Behaviour to **Appearance**. A preview there shows
+the button in every state as you change things.
 
 - **Skins** is a row of ready-made looks. Swipe along it and tap one to use it.
 - **Customise** has a colour picker for the button (tunnel down and tunnel up),
   the cooldown ring and the icon, a switch to mirror the arrow so it turns the
   other way, and sliders for size and for opacity, both while resting and just
   after a tap.
-- **Reset appearance to default** undoes everything.
+- **Reset appearance to default** undoes everything. It turns into **Undo reset**
+  for a few seconds, in case you tapped it by mistake.
 
 ### Other ways to trigger it
 

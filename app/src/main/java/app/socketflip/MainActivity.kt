@@ -46,6 +46,12 @@ class MainActivity : Activity() {
         private const val STATE_HINT = "hint"
         /** From this age on, the About card says how old this copy is and points at Updates. */
         private const val OLD_AFTER_DAYS = 30
+        /**
+         * Target rows put their buttons on a second line below this width in units of
+         * text size (screen width in dp divided by the font scale): a 411 dp phone
+         * stacks from the 130% font size, a 360 dp phone from 115%.
+         */
+        private const val STACK_BELOW_DP = 330f
     }
 
     private lateinit var ui: Ui
@@ -67,7 +73,7 @@ class MainActivity : Activity() {
         ui = Ui(this)
         val column = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(16), dp(24), dp(16), dp(24))
+            setPadding(ui.sidePadding(), dp(24), ui.sidePadding(), dp(24))
         }
 
         column.addView(ui.title(getString(R.string.app_name)))
@@ -276,8 +282,11 @@ class MainActivity : Activity() {
 
     /** Status line with a coloured dot, and the main button saying what it will do. */
     private fun showRunning(on: Boolean) {
-        status.text = getString(if (on) R.string.status_on else R.string.status_off)
-        status.setTextColor(if (on) 0xFF43A047.toInt() else ui.secondaryText)
+        val words = getString(if (on) R.string.status_on else R.string.status_off)
+        // The dot is decoration; TalkBack reads only the words.
+        status.text = getString(R.string.status_line, if (on) "\u25CF" else "\u25CB", words)
+        status.contentDescription = words
+        status.setTextColor(if (on) ui.good else ui.secondaryText)
         toggle.text = getString(if (on) R.string.hide_button else R.string.show_button)
     }
 
@@ -395,15 +404,20 @@ class MainActivity : Activity() {
 
     /**
      * One row per target: a checkbox (every ticked app is reconnected by each tap),
-     * its cooldown, and plain Cooldown and Remove buttons.
+     * its cooldown, and plain Cooldown and Remove buttons. With large text or a narrow
+     * screen the buttons go on a line of their own, or they would squeeze the app
+     * name to a letter or two per line.
      */
     private fun targetRow(pkg: String, ticked: Boolean): LinearLayout = LinearLayout(this).apply {
-        orientation = LinearLayout.HORIZONTAL
+        val config = resources.configuration
+        val stacked = config.screenWidthDp / config.fontScale < STACK_BELOW_DP
+        orientation = if (stacked) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
         val name = Prefs.label(this@MainActivity, pkg)
         val own = Prefs.targetCooldownSeconds(this@MainActivity, pkg)
-        val cooldown = if (own == null) getString(R.string.target_cooldown_line_default, Prefs.cooldownSeconds(context))
-        else getString(R.string.target_cooldown_line, own)
+        val cooldown = if (own == null) Prefs.cooldownSeconds(context).let {
+            resources.getQuantityString(R.plurals.target_cooldown_line_default, it, it)
+        } else resources.getQuantityString(R.plurals.target_cooldown_line, own, own)
         addView(CheckBox(context).apply {
             text = SpannableStringBuilder(name).append("\n").append(
                 cooldown,
@@ -414,9 +428,20 @@ class MainActivity : Activity() {
             }
             isChecked = ticked
             setOnCheckedChangeListener { _, on -> setTicked(pkg, on) }
-        }, LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
-        addView(small(getString(R.string.target_cooldown_button)) { targetCooldown(pkg, name) })
-        addView(small(getString(R.string.target_remove)) { confirmRemove(pkg, name) })
+        }, if (stacked) LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT) else LinearLayout.LayoutParams(0, WRAP_CONTENT, 1f))
+        val cooldownButton = small(getString(R.string.target_cooldown_button)) { targetCooldown(pkg, name) }
+        val removeButton = small(getString(R.string.target_remove)) { confirmRemove(pkg, name) }
+        if (stacked) {
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.END
+                addView(cooldownButton)
+                addView(removeButton)
+            }, LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT))
+        } else {
+            addView(cooldownButton)
+            addView(removeButton)
+        }
     }
 
     private fun small(label: String, onClick: () -> Unit) = ui.textButton(label, onClick)
@@ -444,11 +469,11 @@ class MainActivity : Activity() {
     private fun targetCooldown(pkg: String, name: String) {
         val choices = listOf<Int?>(null, 3, 5, 10, 15, 20, 30, 45, 60)
         val labels = choices.map {
-            if (it == null) getString(R.string.target_cooldown_default) else getString(R.string.target_cooldown_value, it)
+            if (it == null) getString(R.string.target_cooldown_default) else resources.getQuantityString(R.plurals.a11y_seconds, it, it)
         }
         val current = choices.indexOf(Prefs.targetCooldownSeconds(this, pkg)).coerceAtLeast(0)
         AlertDialog.Builder(this)
-            .setTitle(getString(R.string.target_cooldown) + ": " + name)
+            .setTitle(getString(R.string.target_cooldown, name))
             .setSingleChoiceItems(labels.toTypedArray(), current) { dialog, which ->
                 Prefs.setTargetCooldownSeconds(this, pkg, choices[which])
                 dialog.dismiss()

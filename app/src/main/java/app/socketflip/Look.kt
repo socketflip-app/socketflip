@@ -28,6 +28,12 @@ data class Look(
         const val MIN_ALPHA = 0.15f
         const val MIN_SIZE_DP = 36
         const val MAX_SIZE_DP = 96
+        /**
+         * The floating button's touch area is never smaller than this (Android's
+         * accessibility minimum), however small the drawn button is, so a near miss
+         * still lands on it rather than on the game underneath.
+         */
+        const val MIN_TOUCH_DP = 48
         private const val MIN_CONTRAST = 3.0
 
         val DEFAULT = Look(

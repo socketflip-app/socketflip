@@ -135,7 +135,7 @@ SocketFlip has no `INTERNET` permission, collects nothing and sends nothing.
 
 ## Building
 
-Requires JDK 17 and the Android SDK (platform 35).
+Requires JDK 17 and the Android SDK (platform 36).
 
 ```sh
 ./gradlew assembleDebug
@@ -148,6 +148,17 @@ dependency and the app itself has none):
 ```sh
 ./gradlew testReleaseUnitTest
 ```
+
+## Translations
+
+Help is welcome. The first languages wanted are German, Brazilian Portuguese,
+Spanish, French and Russian. Every piece of text is in
+`app/src/main/res/values/strings.xml`: copy it to `values-de/strings.xml` (or
+`values-pt-rBR`, `values-es`, `values-fr`, `values-ru`), translate the text between
+the tags, keep placeholders such as `%1$s` and `%1$d` as they are, and leave out
+anything marked `translatable="false"`. Open a pull request or attach the file to an
+issue. Bug reports from **Check setup** stay in English whatever language the phone
+is in, so they can always be read.
 
 ## Disclaimer
 

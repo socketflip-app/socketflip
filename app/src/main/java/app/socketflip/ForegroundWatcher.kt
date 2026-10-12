@@ -28,6 +28,9 @@ class ForegroundWatcher(private val context: Context, private val changed: (Stri
         // How far back the first read looks: a game can sit in front for a long time.
         private const val LOOKBACK_MS = 60 * 60 * 1000L
 
+        // Deprecated from API 36 in favour of checkOpNoThrow(String, ...), which Android
+        // 10 marks deprecated the other way round; this one works on every version we support.
+        @Suppress("DEPRECATION")
         fun granted(context: Context): Boolean {
             val ops = context.getSystemService(AppOpsManager::class.java)
             return ops.unsafeCheckOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName) ==

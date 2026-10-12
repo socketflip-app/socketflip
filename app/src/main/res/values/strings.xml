@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">SocketFlip</string>
-    <string name="tile_label">SocketFlip</string>
+    <string name="app_name" translatable="false">SocketFlip</string>
+    <string name="tile_label" translatable="false">SocketFlip</string>
     <string name="intro_short">One tap gives the apps you pick a clean, instant reconnect. Nothing else on the phone is touched.</string>
-    <string name="status_on">\u25CF Floating button is on</string>
-    <string name="status_off">\u25CB Floating button is off</string>
+    <string name="status_on">Floating button is on</string>
+    <string name="status_off">Floating button is off</string>
     <string name="targets_add_plus">+ Add app</string>
     <string name="tip_title">Enjoying it?</string>
     <string name="about_title">About</string>
@@ -49,9 +49,7 @@
         <item quantity="other">SocketFlip has reconnected your app %1$d times for you.</item>
     </plurals>
     <string name="version_line">You have version %1$s. SocketFlip never checks online by itself; this opens the latest release in your browser.</string>
-    <string name="check_updates">Check for updates</string>
     <string name="licence_line">SocketFlip is free software under the GNU GPL, version 3 or later. You can read, change and share the source.</string>
-    <string name="source_code">Source code (GPL-3.0)</string>
     <string name="replaced_vpn">SocketFlip\'s tunnel has replaced your other VPN. Turn that VPN back on when you are done.</string>
     <string name="other_vpn_title">Another VPN is on</string>
     <string name="other_vpn_text">Android can only run one VPN at a time. If you carry on, your other VPN is switched off, and Android does not turn it back on by itself. Reopen that VPN app when you are done to reconnect it.</string>
@@ -64,6 +62,10 @@
     <string name="check_report">Report a problem</string>
     <string name="check_report_help">Report a problem opens a new bug report on GitHub in your browser, with this report filled in. You see it before anything is sent, and it never names your apps.</string>
     <string name="check_fix">Fix</string>
+    <string name="check_level_ok">OK</string>
+    <string name="check_level_warn">Warning</string>
+    <string name="check_level_bad">Problem</string>
+    <string name="check_level_info">Info</string>
     <string name="check_allowed">Allowed</string>
     <string name="check_on">On</string>
     <string name="check_off">Off</string>
@@ -77,8 +79,14 @@
     <string name="check_vpn">VPN permission</string>
     <string name="check_vpn_off">Not given yet, so a tap cannot reconnect anything.</string>
     <string name="check_vpn_later">Not checked, because another VPN is on and checking would switch it off. SocketFlip asks when you tap Show floating button.</string>
-    <string name="check_target_report_n">%1$d ticked, all installed</string>
-    <string name="check_target_report_missing">%1$d ticked, %2$d not installed</string>
+    <plurals name="check_target_report_n">
+        <item quantity="one">%1$d ticked, all installed</item>
+        <item quantity="other">%1$d ticked, all installed</item>
+    </plurals>
+    <plurals name="check_target_report_missing">
+        <item quantity="one">%1$d ticked, %2$d not installed</item>
+        <item quantity="other">%1$d ticked, %2$d not installed</item>
+    </plurals>
     <string name="check_battery_info">Not exempted. This only matters on phones that close apps in the background.</string>
     <string name="vpn_taken">SocketFlip has lost its VPN permission, most likely because another VPN app is set as Always-on. Turn Always-on off for that app in Android\'s VPN settings.</string>
     <string name="other_always_on_title">Another VPN app is set as Always-on</string>
@@ -107,7 +115,10 @@
     <string name="battery_allow">Allow</string>
     <string name="settings">Settings</string>
     <string name="settings_behaviour">Behaviour</string>
-    <string name="settings_cooldown">Cooldown between taps: %1$d s</string>
+    <plurals name="settings_cooldown">
+        <item quantity="one">Cooldown between taps: %1$d second</item>
+        <item quantity="other">Cooldown between taps: %1$d seconds</item>
+    </plurals>
     <string name="settings_cooldown_short">Shorter than 10 seconds can leave some apps stuck on their reconnecting screen.</string>
     <string name="settings_cooldown_help">Taps closer together than this are ignored, so a second disconnect cannot land while the app is still reconnecting. The ring around the button shows the time left.</string>
     <string name="settings_haptics">Vibrate when I tap the button</string>
@@ -117,6 +128,7 @@
     <string name="look_preview_up">Tunnel up</string>
     <string name="look_preview_cooldown">Cooldown</string>
     <string name="look_preview_tapped">Tapped</string>
+    <string name="look_preview_scaled">Shown smaller here to fit the screen; the real button uses the size below.</string>
     <string name="look_low_contrast">The icon is hard to see on one of the button colours.</string>
     <string name="look_down">Button colour (tunnel down)</string>
     <string name="look_up">Button colour (tunnel up)</string>
@@ -125,19 +137,62 @@
     <string name="look_brightness">Brightness</string>
     <string name="look_idle_alpha">Opacity when resting: %1$d%%</string>
     <string name="look_pressed_alpha">Opacity just after a tap: %1$d%%</string>
-    <string name="look_size">Size: %1$d dp</string>
+    <string name="look_size">Size: %1$d%% of normal</string>
+    <string name="settings_cooldown_name">Cooldown between taps</string>
+    <string name="look_idle_alpha_name">Opacity when resting</string>
+    <string name="look_pressed_alpha_name">Opacity just after a tap</string>
+    <string name="look_size_name">Size</string>
+    <!-- Also the per-app cooldown choices. -->
+    <plurals name="a11y_seconds">
+        <item quantity="one">%1$d second</item>
+        <item quantity="other">%1$d seconds</item>
+    </plurals>
+    <plurals name="a11y_percent">
+        <item quantity="one">%1$d percent</item>
+        <item quantity="other">%1$d percent</item>
+    </plurals>
+    <plurals name="a11y_size">
+        <item quantity="one">%1$d percent of normal size</item>
+        <item quantity="other">%1$d percent of normal size</item>
+    </plurals>
+    <string name="a11y_colour_row">%1$s, currently %2$s</string>
+    <string name="look_hex">Colour code</string>
+    <string name="a11y_tunnel_down">Tunnel down</string>
+    <string name="a11y_tunnel_up">Tunnel up</string>
+    <plurals name="a11y_cooldown_left">
+        <item quantity="one">%1$s, cooldown %2$d second left</item>
+        <item quantity="other">%1$s, cooldown %2$d seconds left</item>
+    </plurals>
+    <string name="a11y_restart">%1$s. Tap to restart the app; it asks first.</string>
     <string name="look_snap">Snap to the screen edge when I let go</string>
     <string name="look_skins">Skins</string>
+    <string name="skin_default">Default</string>
+    <string name="skin_tavern">Tavern</string>
+    <string name="skin_subtle">Subtle</string>
+    <string name="skin_high_contrast">High Contrast</string>
+    <string name="skin_midnight">Midnight</string>
+    <string name="skin_stealth">Stealth</string>
+    <string name="skin_graphite">Graphite</string>
+    <string name="skin_candy">Candy</string>
+    <string name="skin_citrus">Citrus</string>
+    <string name="skin_sherbet">Sherbet</string>
+    <string name="skin_ember">Ember</string>
+    <string name="skin_lagoon">Lagoon</string>
+    <string name="skin_clear_pair">Clear Pair</string>
+    <string name="skin_whisper">Whisper</string>
     <string name="look_skins_help">Ready-made looks. Tap one to use it, then change anything you like below.</string>
     <string name="look_customise">Customise</string>
     <string name="look_mirror">Mirror the arrow (turns anticlockwise)</string>
     <string name="look_reset">Reset appearance to default</string>
+    <string name="look_reset_undo">Undo reset</string>
+    <string name="look_reset_done">Appearance reset. Tap Undo reset in the next few seconds to get your look back.</string>
     <string name="settings_only_over_target">Only show the button while a ticked app is on screen</string>
     <string name="settings_drop_on_leave">Take the tunnel down when I leave the ticked apps</string>
     <string name="settings_usage_title">Allow Usage access?</string>
     <string name="settings_usage_text">To know when the target app is on screen, SocketFlip needs Usage access. It only checks which app is in front, keeps nothing and sends nothing (it has no internet permission). Find SocketFlip in the list and turn it on. If its switch is greyed out (Android 15 and newer, for apps installed from a browser): open App info for SocketFlip, tap the three-dot menu, tap Allow restricted settings, then come back and turn it on.</string>
     <string name="settings_usage_open">Open settings</string>
     <string name="settings_follow_heading">Following the ticked apps (needs Usage access)</string>
+    <!-- %1$s is a setting name; use your own language's quotation marks around it. -->
     <string name="settings_usage_missing_one">\u201c%1$s\u201d needs Usage access, which is off. Until you allow it, this setting does nothing.</string>
     <string name="settings_usage_missing_both">Both settings above need Usage access, which is off. Until you allow it, they do nothing.</string>
     <string name="settings_usage_allow">Allow Usage access</string>
@@ -152,12 +207,17 @@
     <string name="picker_empty">Every app on this phone is already in your list.</string>
     <string name="picker_no_match">No app matches that.</string>
     <string name="targets_help">Every ticked app is reconnected by each tap. Untick an app to leave it alone without removing it.</string>
-    <string name="target_cooldown_line">%1$d s cooldown, just this app</string>
-    <string name="target_cooldown_line_default">%1$d s cooldown</string>
+    <plurals name="target_cooldown_line">
+        <item quantity="one">%1$d second cooldown, just this app</item>
+        <item quantity="other">%1$d seconds cooldown, just this app</item>
+    </plurals>
+    <plurals name="target_cooldown_line_default">
+        <item quantity="one">%1$d second cooldown</item>
+        <item quantity="other">%1$d seconds cooldown</item>
+    </plurals>
     <string name="target_cooldown_button">Cooldown</string>
     <string name="target_remove_confirm">Remove %1$s from SocketFlip\'s target apps? The app itself is not touched.</string>
-    <string name="target_cooldown">Cooldown for this app</string>
-    <string name="target_cooldown_value">%1$d s</string>
+    <string name="target_cooldown">Cooldown for %1$s</string>
     <string name="target_cooldown_default">Use the one from Settings</string>
     <string name="target_remove">Remove</string>
     <string name="settings_automation_heading">Automation</string>
@@ -210,4 +270,5 @@
         <item quantity="other">You have version %1$s, and this copy is %2$d days old. Tap Updates to check for a newer one; SocketFlip never checks online by itself.</item>
     </plurals>
     <string name="obtainium_line">Tip: the free Obtainium app can tell you when a new version is out. Source code opens the README, which says how.</string>
+    <string name="status_line" translatable="false">%1$s %2$s</string>
 </resources>
