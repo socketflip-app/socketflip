@@ -1,0 +1,1 @@
+Private DNS fix: with Private DNS set to a provider name, apps inside the tunnel now keep working DNS, still over TLS to your provider. Check setup shows how Private DNS is set.

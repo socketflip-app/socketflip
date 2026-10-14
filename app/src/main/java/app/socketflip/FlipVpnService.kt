@@ -92,6 +92,46 @@ class FlipVpnService : VpnService() {
                 .ifEmpty { FALLBACK_DNS.map { InetAddress.getByName(it) } }
 
         /**
+         * The servers to give the tunnel. With Private DNS set to a provider name, none:
+         * Android then gives a VPN network only the provider addresses the VPN has a
+         * route to, and ignores plain servers, so copied ones would leave the ticked apps
+         * with no resolver at all (GitHub issue 1). A VPN with no DNS servers makes netd
+         * send their lookups out over the real network instead, Private DNS included.
+         * Automatic or Off: the network's plain servers, as before. Pure, so the unit
+         * tests cover it.
+         */
+        fun tunnelDns(servers: List<InetAddress>, privateDnsName: String?): List<InetAddress> =
+            if (privateDnsName != null) emptyList() else pickDns(servers)
+
+        /**
+         * The provider name when Private DNS is set to one, else null (see [tunnelDns]).
+         */
+        // SocketFlip is never inside its own tunnel, so activeNetwork is the real network.
+        fun strictPrivateDns(context: Context): String? = try {
+            val cm = context.getSystemService(ConnectivityManager::class.java)
+            cm?.activeNetwork?.let { cm.getLinkProperties(it)?.privateDnsServerName }
+        } catch (e: SecurityException) {
+            null
+        }
+
+        /**
+         * True when the tunnel is up in Private DNS provider mode but still carries DNS
+         * servers, so the ticked apps have no resolver (a tunnel built before the setting
+         * changed that could not be rebuilt). The fallback that keeps the old warning.
+         */
+        // While our tunnel is up, the VPN network that is there is ours.
+        fun privateDnsBlocked(context: Context): Boolean = try {
+            val cm = context.getSystemService(ConnectivityManager::class.java)
+            @Suppress("DEPRECATION")
+            tun != null && cm != null && cm.allNetworks.any { n ->
+                cm.getNetworkCapabilities(n)?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) == true &&
+                    cm.getLinkProperties(n)?.let { it.privateDnsServerName != null && it.dnsServers.isNotEmpty() } == true
+            }
+        } catch (e: SecurityException) {
+            false
+        }
+
+        /**
          * True when a VPN other than SocketFlip is carrying this phone's traffic.
          * SocketFlip's own tunnel never covers SocketFlip itself, so any VPN seen
          * here belongs to another app, and bringing ours up will replace it.
@@ -245,6 +285,10 @@ class FlipVpnService : VpnService() {
             getSystemService(NotificationManager::class.java).cancel(PROBLEM_ID)
             Prefs.setVpnWorked(this)
             watchNetwork(targets, dns)
+            // The flip itself worked, but the apps cannot reconnect: say why.
+            if (privateDnsBlocked(this)) {
+                problem(this, getString(R.string.private_dns_problem, strictPrivateDns(this) ?: "?"))
+            }
         }
     }
 
@@ -286,7 +330,8 @@ class FlipVpnService : VpnService() {
         val cb = object : ConnectivityManager.NetworkCallback() {
             override fun onLinkPropertiesChanged(network: Network, lp: LinkProperties) {
                 if (tun == null) return
-                val fresh = pickDns(lp.dnsServers)
+                // Also catches Private DNS being set to a name, or back, while the tunnel is up.
+                val fresh = tunnelDns(lp.dnsServers, lp.privateDnsServerName)
                 if (sameDns(fresh, current)) return
                 Log.i(TAG, "network DNS changed, rebuilding tunnel")
                 try {
@@ -340,16 +385,17 @@ class FlipVpnService : VpnService() {
     /**
      * The tunnel must hand the app a resolver, or its lookups fail while the tunnel
      * is up. Reuse the current network's servers (they are reached outside the
-     * tunnel, since it routes nothing), falling back to public resolvers.
+     * tunnel, since it routes nothing), falling back to public resolvers; with
+     * Private DNS set to a name, none, see [tunnelDns].
      */
     private fun dnsServers(): List<InetAddress> {
-        val current = try {
+        val lp = try {
             val cm = getSystemService(ConnectivityManager::class.java)
-            cm?.activeNetwork?.let { cm.getLinkProperties(it)?.dnsServers }.orEmpty()
+            cm?.activeNetwork?.let { cm.getLinkProperties(it) }
         } catch (e: SecurityException) {
-            emptyList()
+            null
         }
-        return pickDns(current)
+        return tunnelDns(lp?.dnsServers.orEmpty(), lp?.privateDnsServerName)
     }
 
     /**

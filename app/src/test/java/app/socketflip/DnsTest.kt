@@ -24,6 +24,23 @@ class DnsTest {
         assertEquals(fallback, FlipVpnService.pickDns(ips("fe80::1", "2001:db8::53")))
     }
 
+    // Private DNS set to a name: no servers, so netd sends lookups over the real network (issue 1).
+    @Test fun privateDnsNameGivesTheTunnelNoServers() {
+        assertEquals(emptyList<InetAddress>(), FlipVpnService.tunnelDns(ips("192.168.1.1"), "dns.example"))
+        assertEquals(emptyList<InetAddress>(), FlipVpnService.tunnelDns(emptyList(), "dns.example"))
+    }
+
+    @Test fun automaticOrOffCopiesTheNetworkServers() {
+        assertEquals(ips("192.168.1.1"), FlipVpnService.tunnelDns(ips("192.168.1.1", "fe80::1"), null))
+        assertEquals(ips("1.1.1.1", "9.9.9.9"), FlipVpnService.tunnelDns(emptyList(), null))
+    }
+
+    // Switching Private DNS to a name while the tunnel is up must rebuild it without servers.
+    @Test fun switchingToAPrivateDnsNameIsAChange() {
+        val before = FlipVpnService.tunnelDns(ips("192.168.1.1"), null)
+        assertFalse(FlipVpnService.sameDns(before, FlipVpnService.tunnelDns(ips("192.168.1.1"), "dns.example")))
+    }
+
     // A DHCP renew that only reorders the same resolvers must not rebuild the tunnel.
     @Test fun sameResolversInAnotherOrderAreTheSame() {
         assertTrue(FlipVpnService.sameDns(ips("192.168.1.1", "8.8.8.8"), ips("8.8.8.8", "192.168.1.1")))

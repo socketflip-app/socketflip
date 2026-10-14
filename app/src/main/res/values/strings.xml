@@ -103,6 +103,13 @@
     <string name="check_other_vpn">Other VPN</string>
     <string name="check_other_vpn_on">Another VPN is on. A tap that brings SocketFlip\'s tunnel up will switch it off.</string>
     <string name="check_other_vpn_off">None running.</string>
+    <string name="check_private_dns">Private DNS</string>
+    <string name="check_private_dns_ok">Automatic or off.</string>
+    <string name="check_private_dns_host">Set to %1$s. While the tunnel is up, Android gives your ticked apps no DNS, so they cannot connect. Set Private DNS to Automatic or Off in Network and internet settings.</string>
+    <string name="check_private_dns_report">Set to a provider name, so the ticked apps get no DNS while the tunnel is up.</string>
+    <string name="check_private_dns_kept">Set to %1$s. While the tunnel is up, your ticked apps look names up over your network, with Private DNS still on.</string>
+    <string name="check_private_dns_kept_report">Set to a provider name; the tunnel leaves DNS to the network, so Private DNS stays on.</string>
+    <string name="private_dns_problem">Private DNS is set to %1$s, so your ticked apps get no DNS while the tunnel is up and cannot connect. Set Private DNS to Automatic or Off in Network and internet settings.</string>
     <string name="check_battery">Battery optimisation</string>
     <string name="check_xiaomi">Xiaomi: open new windows in the background</string>
     <string name="check_xiaomi_detail">Android cannot tell SocketFlip whether this is allowed. Emergency restart needs it: tap Fix, then under Other permissions allow \"Open new windows while running in the background\".</string>

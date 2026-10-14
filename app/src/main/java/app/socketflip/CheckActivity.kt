@@ -184,6 +184,22 @@ class CheckActivity : Activity() {
             else item(Level.OK, R.string.check_other_vpn, R.string.check_other_vpn_off)
         )
 
+        // The report goes into public bug reports, so it never names the DNS provider.
+        // A provider name is handled (the tunnel then leaves DNS to the network); the
+        // old problem row stays for a tunnel that is up and still carries DNS servers.
+        add(
+            FlipVpnService.strictPrivateDns(this@CheckActivity)?.let { host ->
+                if (FlipVpnService.privateDnsBlocked(this@CheckActivity)) Item(
+                    Level.BAD, R.string.check_private_dns, getString(R.string.check_private_dns_host, host),
+                    report = english.getString(R.string.check_private_dns_report),
+                ) { open(Intent(Settings.ACTION_WIRELESS_SETTINGS)) }
+                else Item(
+                    Level.OK, R.string.check_private_dns, getString(R.string.check_private_dns_kept, host),
+                    report = english.getString(R.string.check_private_dns_kept_report),
+                )
+            } ?: item(Level.OK, R.string.check_private_dns, R.string.check_private_dns_ok)
+        )
+
         // Only a warning on the makers known to close background apps; the main screen
         // does not even ask on other phones, so a Pixel should not show a problem here.
         add(

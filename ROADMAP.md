@@ -77,6 +77,8 @@ ship. Ideas and requests are welcome in the
       reports that stay in English (1.14)
 - [x] Built with current Android tools, targets Android 16 (1.14)
 - [x] Targets Android 17 (1.14)
+- [x] Name lookups keep working inside the tunnel when Private DNS is set to a
+      provider name, with Private DNS still on (1.15)
 
 ## Later
 
