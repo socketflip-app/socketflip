@@ -79,6 +79,11 @@ ship. Ideas and requests are welcome in the
 - [x] Targets Android 17 (1.14)
 - [x] Name lookups keep working inside the tunnel when Private DNS is set to a
       provider name, with Private DNS still on (1.15)
+- [x] Flip counter: the button shows reconnects this game and warns at a limit you
+      set (10 by default); emergency restarts count too (1.16)
+- [x] Optional hold to restart: hold the button still to restart a stuck app at
+      any time, after asking (dragging still moves it) (1.16)
+- [x] Stop stays reachable: the notification comes back whenever the button hides (1.16)
 
 ## Later
 

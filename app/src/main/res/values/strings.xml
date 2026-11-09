@@ -76,6 +76,7 @@
     <string name="check_overlay_off">Not allowed, so the floating button cannot appear.</string>
     <string name="check_notify">Notifications</string>
     <string name="check_notify_off">Off. The button still works, but you lose the Flip now and Stop actions and any warnings.</string>
+    <string name="check_notify_button_off">The Floating button notification is off, so Stop is not in the pull-down while the button is hidden.</string>
     <string name="check_vpn">VPN permission</string>
     <string name="check_vpn_off">Not given yet, so a tap cannot reconnect anything.</string>
     <string name="check_vpn_later">Not checked, because another VPN is on and checking would switch it off. SocketFlip asks when you tap Show floating button.</string>
@@ -237,6 +238,29 @@
     <string name="shortcut_show">Show button</string>
     <string name="shortcut_hide">Hide button</string>
     <string name="settings_emergency">Emergency restart</string>
+    <string name="settings_hold_restart">Hold the button to restart</string>
+    <string name="settings_hold_restart_help">Rest a finger on the button for about a second to get the same restart question at any time, without a flip first. Dragging still moves the button, and it always asks first.</string>
+    <string name="settings_counter_heading">Flip counter</string>
+    <string name="settings_counter">Count flips each game</string>
+    <plurals name="settings_counter_limit">
+        <item quantity="one">Limit: %1$d flip a game</item>
+        <item quantity="other">Limit: %1$d flips a game</item>
+    </plurals>
+    <string name="settings_counter_limit_name">Flip limit</string>
+    <plurals name="settings_counter_gap">
+        <item quantity="one">New game after %1$d minute with no flip</item>
+        <item quantity="other">New game after %1$d minutes with no flip</item>
+    </plurals>
+    <string name="settings_counter_gap_name">New game after</string>
+    <string name="settings_counter_help">Some games remove a player after too many reconnects in one match. The button shows the count, emergency restarts included: amber one before the limit, red at it. Past the limit a tap only warns, and a second tap flips. SocketFlip cannot see when a game ends, so the count starts again after the time above with no flip, or with New game in the notification.</string>
+    <plurals name="a11y_minutes">
+        <item quantity="one">%1$d minute</item>
+        <item quantity="other">%1$d minutes</item>
+    </plurals>
+    <plurals name="a11y_flip_count">
+        <item quantity="one">%1$d flip</item>
+        <item quantity="other">%1$d flips</item>
+    </plurals>
     <string name="settings_emergency_help">For the rare time an app stays stuck on its reconnecting screen. While the cooldown runs, the button turns into a red ! and a tap on it asks whether to restart the app: Restart or Cancel. It always asks first. If an app survives a restart, the button below opens its App info page with Force stop.</string>
     <string name="restart_title">Restart %1$s?</string>
     <string name="restart_pick_title">Restart which app?</string>
@@ -258,6 +282,16 @@
     <string name="notif_text_none">No app ticked: open SocketFlip to choose one.</string>
     <string name="action_flip">Flip now</string>
     <string name="action_stop">Stop</string>
+    <string name="action_new_match">New game</string>
+    <string name="new_match_done">Flip count reset for a new game.</string>
+    <plurals name="flip_limit">
+        <item quantity="one">%d flip this game, your limit. Tap again to flip anyway.</item>
+        <item quantity="other">%d flips this game, your limit. Tap again to flip anyway.</item>
+    </plurals>
+    <plurals name="a11y_flips">
+        <item quantity="one">%1$s, %2$d flip this game</item>
+        <item quantity="other">%1$s, %2$d flips this game</item>
+    </plurals>
     <string name="numbers_title">Your numbers</string>
     <string name="numbers_line">Reconnects: %1$s in total, %2$s this week\nEmergency restarts used: %3$s\nCounted on this phone only; SocketFlip sends nothing.</string>
     <string name="numbers_share">Share</string>

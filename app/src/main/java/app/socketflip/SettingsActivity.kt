@@ -56,6 +56,7 @@ class SettingsActivity : Activity() {
         // What people come here to fix first (the cooldown), then the looks, then the
         // rarely changed automation.
         behaviour()
+        counter()
         following()
         appearance()
         automation()
@@ -107,8 +108,55 @@ class SettingsActivity : Activity() {
         switch(R.string.settings_hints, Prefs.hints(this)) { Prefs.setHints(this, it) }
         switch(R.string.settings_emergency, Prefs.emergencyRestart(this)) { Prefs.setEmergencyRestart(this, it) }
         column.addView(ui.caption(getString(R.string.settings_emergency_help)))
+        switch(R.string.settings_hold_restart, Prefs.holdRestart(this)) { Prefs.setHoldRestart(this, it) }
+        column.addView(ui.caption(getString(R.string.settings_hold_restart_help)))
         // Force stop lives here, not in the restart question, which keeps to two choices.
         column.addView(ui.textButton(getString(R.string.restart_force)) { openAppInfo() }, WRAP_CONTENT, WRAP_CONTENT)
+    }
+
+    private fun counter() {
+        heading(R.string.settings_counter_heading)
+        switch(R.string.settings_counter, Prefs.flipCounter(this)) { Prefs.setFlipCounter(this, it) }
+        numberSlider(
+            Prefs.LIMIT_MIN, Prefs.LIMIT_MAX, Prefs.flipLimit(this), R.string.settings_counter_limit_name,
+            { resources.getQuantityString(R.plurals.settings_counter_limit, it, it) },
+            { resources.getQuantityString(R.plurals.a11y_flip_count, it, it) },
+        ) { Prefs.setFlipLimit(this, it) }
+        numberSlider(
+            Prefs.GAP_MIN_MIN, Prefs.GAP_MAX_MIN, Prefs.matchGapMinutes(this), R.string.settings_counter_gap_name,
+            { resources.getQuantityString(R.plurals.settings_counter_gap, it, it) },
+            { resources.getQuantityString(R.plurals.a11y_minutes, it, it) },
+        ) { Prefs.setMatchGapMinutes(this, it) }
+        column.addView(ui.caption(getString(R.string.settings_counter_help)))
+    }
+
+    /** A labelled whole-number slider; [name] and [words] are for TalkBack. */
+    private fun numberSlider(
+        min: Int, max: Int, start: Int, name: Int, label: (Int) -> String, words: (Int) -> String, set: (Int) -> Unit,
+    ) {
+        val text = TextView(this).apply {
+            setPadding(0, dp(12), 0, 0)
+            setTextColor(ui.primaryText)
+        }
+        val bar = SeekBar(this)
+        fun show(v: Int) {
+            text.text = label(v)
+            bar.describe(getString(name), words(v))
+        }
+        bar.max = max - min
+        bar.progress = start - min
+        bar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar, value: Int, fromUser: Boolean) {
+                show(value + min)
+                if (fromUser) set(value + min)
+            }
+
+            override fun onStartTrackingTouch(bar: SeekBar) {}
+            override fun onStopTrackingTouch(bar: SeekBar) {}
+        })
+        column.addView(text)
+        column.addView(bar, MATCH_PARENT, WRAP_CONTENT)
+        show(start)
     }
 
     private fun following() {

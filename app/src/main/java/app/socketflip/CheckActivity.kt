@@ -140,13 +140,27 @@ class CheckActivity : Activity() {
             }
         )
 
-        val notifyOk = getSystemService(android.app.NotificationManager::class.java).areNotificationsEnabled() &&
+        val nm = getSystemService(android.app.NotificationManager::class.java)
+        val notifyOk = nm.areNotificationsEnabled() &&
             (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED)
+        // The app's notifications can be on with just the button's channel switched off,
+        // which hides Stop while the button is hidden. No channel yet = never started, fine.
+        val buttonChannelOff =
+            nm.getNotificationChannel(OverlayService.CHANNEL)?.importance == android.app.NotificationManager.IMPORTANCE_NONE
         add(
-            if (notifyOk) item(Level.OK, R.string.check_notify, R.string.check_allowed)
-            else item(Level.WARN, R.string.check_notify, R.string.check_notify_off) {
-                open(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+            when {
+                !notifyOk -> item(Level.WARN, R.string.check_notify, R.string.check_notify_off) {
+                    open(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName))
+                }
+                buttonChannelOff -> item(Level.WARN, R.string.check_notify, R.string.check_notify_button_off) {
+                    open(
+                        Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                            .putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+                            .putExtra(Settings.EXTRA_CHANNEL_ID, OverlayService.CHANNEL)
+                    )
+                }
+                else -> item(Level.OK, R.string.check_notify, R.string.check_allowed)
             }
         )
 

@@ -52,10 +52,49 @@ class FlipVpnService : VpnService() {
         private const val WARN_CHANNEL = "warnings"
         private const val WARN_ID = 2
         private const val PROBLEM_ID = 3
+        // The second tap that confirms a flip past the limit must come within this.
+        private const val CONFIRM_MS = 4000L
         private val FALLBACK_DNS = listOf("1.1.1.1", "9.9.9.9")
 
         @Volatile private var tun: ParcelFileDescriptor? = null
         @Volatile private var lastFlip = 0L
+        @Volatile private var matchFlips = 0
+        // When the last reconnect was counted (a flip or a restart); separate from
+        // lastFlip, which also moves when the tunnel is merely stopped.
+        @Volatile private var lastCounted = 0L
+        @Volatile private var limitWarnedAt = 0L
+
+        /**
+         * Reconnects this game, flips and emergency restarts alike: SocketFlip cannot
+         * see games, so a quiet spell (Settings, 6 minutes by default) starts a new
+         * count, or the notification's New game resets it. 0 with the counter off.
+         */
+        fun flipsThisMatch(context: Context): Int =
+            if (!Prefs.flipCounter(context)) 0 else rawCount(context)
+
+        private fun rawCount(context: Context): Int =
+            MatchCount.current(matchFlips, lastCounted, SystemClock.elapsedRealtime(), Prefs.matchGapMs(context))
+
+        /** Milliseconds until a quiet spell resets the count, so the badge can redraw then. */
+        fun matchResetIn(context: Context): Long =
+            MatchCount.resetIn(lastCounted, SystemClock.elapsedRealtime(), Prefs.matchGapMs(context))
+
+        /**
+         * Counts one reconnect of the target. Kept even with the counter off, so
+         * switching it on mid-game shows the right number. Main thread only.
+         */
+        fun countReconnect(context: Context) {
+            matchFlips = rawCount(context) + 1
+            lastCounted = SystemClock.elapsedRealtime()
+            limitWarnedAt = 0L
+            listeners.forEach { it() }
+        }
+
+        fun newMatch() {
+            matchFlips = 0
+            lastCounted = 0L
+            listeners.forEach { it() }
+        }
 
         val isUp: Boolean get() = tun != null
 
@@ -235,6 +274,13 @@ class FlipVpnService : VpnService() {
             if (Prefs.hints(this)) toast(getString(R.string.cooldown))
             return
         }
+        // Past the limit the first tap only warns; a second within a few seconds flips.
+        val count = flipsThisMatch(this)
+        if (count >= Prefs.flipLimit(this) && now - limitWarnedAt > CONFIRM_MS) {
+            limitWarnedAt = now
+            toast(resources.getQuantityString(R.plurals.flip_limit, count, count))
+            return
+        }
         val wasUp = tun != null
         if (wasUp) down() else {
             val replacing = otherVpnActive(this)
@@ -245,6 +291,7 @@ class FlipVpnService : VpnService() {
         // hold the next tap back behind the cooldown.
         if ((tun != null) != wasUp) {
             lastFlip = now
+            countReconnect(this)
             Prefs.countFlip(this)
         }
     }

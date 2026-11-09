@@ -36,6 +36,10 @@ object Prefs {
     private const val KEY_TARGET_COOLDOWN = "cooldown_s:"
     private const val KEY_AUTOMATION = "automation"
     private const val KEY_EMERGENCY = "emergency_restart"
+    private const val KEY_HOLD_RESTART = "hold_restart"
+    private const val KEY_COUNTER = "flip_counter"
+    private const val KEY_FLIP_LIMIT = "flip_limit"
+    private const val KEY_MATCH_GAP = "match_gap_min"
     private const val KEY_AUTOMATION_TOKEN = "automation_token"
     private const val KEY_DOWN = "look_down"
     private const val KEY_UP = "look_up"
@@ -49,6 +53,17 @@ object Prefs {
     const val COOLDOWN_MIN_S = 3
     const val COOLDOWN_MAX_S = 60
     const val COOLDOWN_DEFAULT_S = 10
+
+    // Flip counter. A game seen in testing refused the 11th reconnect of a match
+    // twice (2026-10-10 and 10-27) and removed the player, hence 10.
+    const val LIMIT_MIN = 1
+    const val LIMIT_MAX = 30
+    const val LIMIT_DEFAULT = 10
+    // SocketFlip cannot see matches: this many minutes with no flip starts a new count.
+    // Flips in a game were at most ~4 minutes apart, hence 6.
+    const val GAP_MIN_MIN = 1
+    const val GAP_MAX_MIN = 30
+    const val GAP_DEFAULT_MIN = 6
 
     /** Where the tip button goes: a Stripe pay-what-you-want page, opened in the browser. */
     const val TIP_URL = "https://buy.stripe.com/cNidR84Lg4pT36l35jfnO00"
@@ -338,6 +353,35 @@ object Prefs {
 
     fun setEmergencyRestart(context: Context, on: Boolean) =
         prefs(context).edit().putBoolean(KEY_EMERGENCY, on).apply()
+
+    /**
+     * Holding the button still opens the restart question at any time, so a stuck app
+     * can be restarted without a flip first. Dragging still moves the button. Off by default.
+     */
+    fun holdRestart(context: Context): Boolean = prefs(context).getBoolean(KEY_HOLD_RESTART, false)
+
+    fun setHoldRestart(context: Context, on: Boolean) =
+        prefs(context).edit().putBoolean(KEY_HOLD_RESTART, on).apply()
+
+    /** Show the flips-this-game badge and warn at the limit. */
+    fun flipCounter(context: Context): Boolean = prefs(context).getBoolean(KEY_COUNTER, true)
+
+    fun setFlipCounter(context: Context, on: Boolean) = prefs(context).edit().putBoolean(KEY_COUNTER, on).apply()
+
+    /** Reconnects a game allows; past it a tap only warns, and a second tap flips. */
+    fun flipLimit(context: Context): Int = prefs(context).getInt(KEY_FLIP_LIMIT, LIMIT_DEFAULT).coerceIn(LIMIT_MIN, LIMIT_MAX)
+
+    fun setFlipLimit(context: Context, n: Int) =
+        prefs(context).edit().putInt(KEY_FLIP_LIMIT, n.coerceIn(LIMIT_MIN, LIMIT_MAX)).apply()
+
+    /** Minutes with no flip after which the count starts again for a new game. */
+    fun matchGapMinutes(context: Context): Int =
+        prefs(context).getInt(KEY_MATCH_GAP, GAP_DEFAULT_MIN).coerceIn(GAP_MIN_MIN, GAP_MAX_MIN)
+
+    fun matchGapMs(context: Context): Long = matchGapMinutes(context) * 60_000L
+
+    fun setMatchGapMinutes(context: Context, m: Int) =
+        prefs(context).edit().putInt(KEY_MATCH_GAP, m.coerceIn(GAP_MIN_MIN, GAP_MAX_MIN)).apply()
 
     /**
      * A random code, made once per install, that an automation broadcast must carry

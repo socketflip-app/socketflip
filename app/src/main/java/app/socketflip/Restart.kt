@@ -71,6 +71,9 @@ object Restart {
             return false
         }
         Prefs.countRestart(context)
+        // The app reconnects from scratch, which the server counts like any other
+        // reconnect, so it uses up one of the game's flips too.
+        FlipVpnService.countReconnect(context)
         val see = ForegroundWatcher.granted(context)
         // An hour back, so the app's own earlier resume is in the picture.
         val front = if (see) UsageFront(context, 60 * 60 * 1000L) else null

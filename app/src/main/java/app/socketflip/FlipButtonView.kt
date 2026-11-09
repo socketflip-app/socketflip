@@ -68,6 +68,8 @@ class FlipButtonView(context: Context) : View(context) {
         typeface = Typeface.DEFAULT_BOLD
     }
 
+    private val badge = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+
     /** Briefly shows the "just tapped" opacity, as feedback that the tap landed. */
     fun flash() {
         pressedUntil = SystemClock.elapsedRealtime() + FLASH_MS
@@ -124,8 +126,26 @@ class FlipButtonView(context: Context) : View(context) {
             canvas.drawArc(arc, -90f, 360f * ringLeft, false, ring)
         }
 
+        // Flips this match, bottom right: grey, amber one before the limit, red at it.
+        val flips = if (p == null) FlipVpnService.flipsThisMatch(context) else 0
+        if (flips > 0) {
+            val r = size * 0.18f
+            val bx = cx + size * 0.3f
+            val by = cy + size * 0.3f
+            badge.color = when (MatchCount.level(flips, Prefs.flipLimit(context))) {
+                2 -> ALARM_COLOR
+                1 -> AMBER
+                else -> GREY
+            }
+            canvas.drawCircle(bx, by, r, badge)
+            bang.textSize = r * 1.15f
+            canvas.drawText(flips.toString(), bx, by - (bang.descent() + bang.ascent()) / 2f, bang)
+        }
+
         // Keep animating while something is changing; stop drawing once it settles.
         if (p == null && (ringLeft > 0f || pressed || pulsing)) postInvalidateOnAnimation()
+        // Settled with a count showing: redraw once when a quiet spell starts a new match.
+        else if (flips > 0) postInvalidateDelayed(FlipVpnService.matchResetIn(context) + 500)
     }
 
     /**
@@ -145,7 +165,9 @@ class FlipButtonView(context: Context) : View(context) {
     }
 
     private fun stateWords(): String {
-        val tunnel = context.getString(if (FlipVpnService.isUp) R.string.a11y_tunnel_up else R.string.a11y_tunnel_down)
+        val state = context.getString(if (FlipVpnService.isUp) R.string.a11y_tunnel_up else R.string.a11y_tunnel_down)
+        val flips = FlipVpnService.flipsThisMatch(context)
+        val tunnel = if (flips > 0) context.resources.getQuantityString(R.plurals.a11y_flips, flips, state, flips) else state
         val left = FlipVpnService.cooldownLeft(context)
         if (left <= 0f) return tunnel
         val s = ceil(left * Prefs.cooldownMs(context) / 1000.0).toInt()
@@ -158,5 +180,7 @@ class FlipButtonView(context: Context) : View(context) {
         private const val FLASH_MS = 600L
         private const val PULSE_MS = 300L
         private const val ALARM_COLOR = 0xFFD32F2F.toInt()
+        private const val AMBER = 0xFFE65100.toInt()
+        private const val GREY = 0xFF424242.toInt()
     }
 }

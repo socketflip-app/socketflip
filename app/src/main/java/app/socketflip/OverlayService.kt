@@ -31,11 +31,16 @@ class OverlayService : Service() {
 
     companion object {
         const val ACTION_STOP = "app.socketflip.action.STOP_OVERLAY"
+        const val ACTION_NEW_MATCH = "app.socketflip.action.NEW_MATCH"
 
-        private const val CHANNEL = "overlay"
+        /** The ongoing notification's channel; Check setup warns when it alone is switched off. */
+        const val CHANNEL = "overlay"
         private const val NOTIFICATION_ID = 1
         // How long another app must stay in front before it counts as leaving the target.
         private const val LEAVE_CONFIRM_MS = 2000L
+        // Hold to restart: how long the finger must rest without moving. Longer than
+        // Android's long press, so a thumb resting mid-game does not set it off.
+        private const val HOLD_RESTART_MS = 800L
 
         @Volatile var running = false
             private set
@@ -79,7 +84,13 @@ class OverlayService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) stopSelf()
+        when (intent?.action) {
+            ACTION_STOP -> stopSelf()
+            ACTION_NEW_MATCH -> {
+                FlipVpnService.newMatch()
+                Toast.makeText(this, R.string.new_match_done, Toast.LENGTH_SHORT).show()
+            }
+        }
         return START_NOT_STICKY
     }
 
@@ -121,6 +132,14 @@ class OverlayService : Service() {
     /** Keeps the notification naming the active target when it changes. */
     private fun updateNotification() {
         if (Prefs.checkedLabels(this) == notifiedTarget) return
+        postNotification()
+    }
+
+    /**
+     * Posts the notification again. Android 14 and later let it be swiped away, and it
+     * is the only Stop while the button is hidden, so hiding the button brings it back.
+     */
+    private fun postNotification() {
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification())
     }
 
@@ -131,6 +150,9 @@ class OverlayService : Service() {
         )
         val stop = PendingIntent.getService(
             this, 2, Intent(this, OverlayService::class.java).setAction(ACTION_STOP), flags
+        )
+        val newMatch = PendingIntent.getService(
+            this, 4, Intent(this, OverlayService::class.java).setAction(ACTION_NEW_MATCH), flags
         )
         val open = PendingIntent.getActivity(this, 3, Intent(this, MainActivity::class.java), flags)
         notifiedTarget = Prefs.checkedLabels(this)
@@ -144,6 +166,7 @@ class OverlayService : Service() {
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(Notification.Action.Builder(null, getString(R.string.action_flip), flip).build())
+            .addAction(Notification.Action.Builder(null, getString(R.string.action_new_match), newMatch).build())
             .addAction(Notification.Action.Builder(null, getString(R.string.action_stop), stop).build())
             .build()
     }
@@ -175,22 +198,42 @@ class OverlayService : Service() {
         var startX = 0
         var startY = 0
         var dragging = false
-        // Press and hold is for moving the button: a hold released without moving
-        // is not a tap, so it never flips and never offers the emergency restart.
+        var held = false
+        // Hold to restart (opt-in): resting the finger still opens the restart question,
+        // with no flip needed first. Any drag cancels it, so dragging still moves the button.
+        val hold = Runnable {
+            held = true
+            if (Prefs.haptics(this)) view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            confirmRestart()
+        }
+        // Otherwise a hold released without moving is not a tap: it never flips and
+        // never offers the emergency restart.
         val holdMs = ViewConfiguration.getLongPressTimeout().toLong()
         view.setOnClickListener { tapped(view) }
+        // TalkBack's double-tap-and-hold arrives here; a finger's hold goes through the touch listener.
+        view.setOnLongClickListener {
+            if (!Prefs.holdRestart(this)) return@setOnLongClickListener false
+            confirmRestart()
+            true
+        }
         view.setOnTouchListener { v, e ->
             when (e.actionMasked) {
                 MotionEvent.ACTION_DOWN -> {
                     downX = e.rawX; downY = e.rawY
                     startX = lp.x; startY = lp.y
                     dragging = false
+                    held = false
+                    handler.removeCallbacks(hold)
+                    if (Prefs.holdRestart(this)) handler.postDelayed(hold, HOLD_RESTART_MS)
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val dx = e.rawX - downX
                     val dy = e.rawY - downY
-                    if (!dragging && hypot(dx, dy) > slop) dragging = true
+                    if (!dragging && !held && hypot(dx, dy) > slop) {
+                        dragging = true
+                        handler.removeCallbacks(hold)
+                    }
                     if (dragging) {
                         lp.x = startX + dx.toInt()
                         lp.y = startY + dy.toInt()
@@ -199,11 +242,17 @@ class OverlayService : Service() {
                     true
                 }
                 MotionEvent.ACTION_UP -> {
+                    handler.removeCallbacks(hold)
                     when {
+                        held -> Unit
                         dragging -> if (Prefs.snapToEdge(this)) snap(v, lp) else Prefs.setPosition(this, lp.x, lp.y)
                         e.eventTime - e.downTime < holdMs -> v.performClick()
                         else -> Unit
                     }
+                    true
+                }
+                MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(hold)
                     true
                 }
                 else -> false
@@ -332,6 +381,7 @@ class OverlayService : Service() {
         } catch (e: IllegalArgumentException) {
             // Not attached any more.
         }
+        if (!shown) postNotification()
     }
 
     /** Redraws the button after a change on the settings screen, resizing it if needed. */
