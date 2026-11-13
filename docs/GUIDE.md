@@ -13,7 +13,7 @@ Phone makers word their screens slightly differently. Where a step says
 ## 1. Download
 
 1. On your phone, open <https://github.com/socketflip-app/socketflip/releases/latest>.
-2. Under **Assets**, tap the `.apk` file (named `socketflip-<version>.apk`, for example `socketflip-1.6.apk`).
+2. Under **Assets**, tap the `.apk` file (named `socketflip-<version>.apk`, for example `socketflip-1.16.apk`).
 3. If your browser warns that "this type of file can harm your device", tap
    **Download anyway**. Every APK download gets this warning.
 
@@ -104,7 +104,23 @@ restart. Turn on **Settings > Emergency restart**: while the cooldown runs, the
 button turns into a red **!**, and tapping it asks "Restart (app name)?" with two
 big buttons, **Restart** and **Cancel**. It always asks first, so a stray tap never
 restarts anything; Back or a tap outside the question cancels. Press and hold only
-moves the button.
+moves the button, unless you turn on the next setting.
+
+**Settings > Hold the button to restart** (off by default) gives you the same
+question at any time, without a flip first: rest a finger on the button for about
+a second. Dragging still moves the button, and it always asks first.
+
+### Flip counter
+
+Some games remove a player after too many reconnects in one match. The button
+shows how many times the app has reconnected this game, emergency restarts
+included: amber one before your limit and red at it. Past the limit a tap only
+warns, and a second tap flips anyway.
+
+In **Settings > Flip counter** you can switch it off, set the limit (10 unless you
+change it) and choose how many minutes with no flip start a new game (6 unless
+you change it). SocketFlip cannot see when a game ends, so that quiet gap is how
+it knows; **New game** on the notification resets the count by hand.
 
 ### Following the target app (optional)
 

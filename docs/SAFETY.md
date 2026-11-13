@@ -76,10 +76,10 @@ The technical name for "keep the floating button on screen while another app is
 in front". It is paired with the notification above. It does not show a prompt.
 
 ### View network connections
-Lets SocketFlip read which DNS servers your Wi-Fi or mobile network uses, so it
-can pass them on to the apps you picked (otherwise they could not look up
-addresses while the tunnel is on). It can only *read* this, not change it, and it
-does not show a prompt.
+Lets SocketFlip read which DNS servers your Wi-Fi or mobile network uses, and
+whether Private DNS is set to a provider name, so that name lookups keep working
+for the apps you picked while the tunnel is on. It can only *read* this, not
+change it, and it does not show a prompt.
 
 ### Ask to ignore battery optimisations
 Lets SocketFlip show Android's own "let this app run in the background?" prompt.

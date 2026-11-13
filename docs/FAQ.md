@@ -44,12 +44,17 @@ The download was cut short, or your Android is older than 10. Download it again.
 
 ### Will Android stop me installing apps from outside the Play Store?
 
-Not yet. Google's 2026 developer registration rules only apply to a few
-participating app stores, so nothing changes in 2026 for SocketFlip installed from
-this page. Google plans to extend them to all certified Android phones in 2027,
-and apps from unregistered developers would then need extra steps to install.
-If your phone refuses to install SocketFlip with a message about an unverified
-developer, please open an issue here and say which country you are in.
+In most countries, not yet. Google's developer verification rules started on
+30 September 2026 in Brazil, Indonesia, Singapore and Thailand, on certified
+Android phones, and Google plans to extend them to the rest of the world in 2027.
+Where they apply, an app from a developer who has not registered with Google can
+need extra steps to install: Android's "advanced flow", which you switch on with
+**Allow apps from unverified developers** in Developer options and which makes
+you wait 24 hours the first time (see
+[Google's help page](https://support.google.com/android/answer/17588095)).
+Installing from a computer with `adb install` is not affected. If your phone
+refuses to install SocketFlip with a message about an unverified developer,
+please open an issue here and say which country you are in.
 
 ### Does it work on iPhone?
 
@@ -61,9 +66,10 @@ another app and back reportedly already gives some games a reconnect.
 
 ### The "Display over other apps" or "Usage access" switch is greyed out
 
-On Android 13 and newer, some settings are locked for apps installed from a
-browser or file manager ("restricted settings"). Android 15 added Usage access to
-that list, which the settings that follow the target app need. To unlock them:
+On Android 15 and newer, both of these switches are locked for apps installed
+from a browser or file manager ("restricted settings"). SocketFlip needs Display
+over other apps for its button; Usage access is only for the optional settings
+that follow the ticked apps. To unlock them:
 
 1. Open **Settings > Apps > SocketFlip** (or long-press the icon, **App info**).
 2. Tap the **three-dot menu** in the top corner.
@@ -221,6 +227,11 @@ servers straight away.
 The exception: if the network offers none that SocketFlip can use, it falls back
 to Cloudflare (`1.1.1.1`) and Quad9 (`9.9.9.9`). That includes mobile networks that
 only hand out IPv6 DNS servers. Nothing changes while the tunnel is down.
+
+If **Private DNS** is set to a provider name (in Android's network settings),
+SocketFlip gives its tunnel no DNS servers at all, from version 1.15. Lookups then
+go out over your normal network exactly as they do with the tunnel down, with
+Private DNS still on.
 
 ### Does it drain the battery or slow my connection?
 

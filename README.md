@@ -8,7 +8,7 @@ a second or two. Nothing else on the phone is touched, and no traffic ever passe
 through SocketFlip.
 
 **[Download the latest APK](https://github.com/socketflip-app/socketflip/releases/latest)**:
-Android 10 or newer, a small download (under 150 KB), no internet permission. New to installing APKs?
+Android 10 or newer, a small download (under 200 KB), no internet permission. New to installing APKs?
 Follow the [2-minute guide](docs/GUIDE.md).
 
 ## The short version
@@ -62,7 +62,7 @@ UDP, or reconnected so quickly you did not notice.
 
 SocketFlip uses Android's VPN API, but not to carry traffic:
 
-- The tunnel covers only the target app. It has the address `10.111.222.1` and
+- The tunnel covers only the apps you tick. It has the address `10.111.222.1` and
   routes exactly one other address, `10.111.222.2`, which nothing uses. All of
   the app's real traffic still goes out over Wi-Fi or mobile data as normal.
   There is no server at the other end and nothing leaves the phone.
@@ -113,12 +113,12 @@ releases:
 2. Tap **Add App**, paste `https://github.com/socketflip-app/socketflip`, and tap
    **Add**.
 
+Obtainium then tells you when a new release is out. Every SocketFlip release is
+signed with the same key, so updates install over the top and keep your settings.
+
 Without Obtainium, SocketFlip's About card tells you once your copy is more than 30
 days old (it knows from Android's install date, with no network check); tap
 **Updates** to look for a newer one.
-
-Obtainium then tells you when a new release is out. Every SocketFlip release is
-signed with the same key, so updates install over the top and keep your settings.
 
 ## Permissions
 
@@ -127,15 +127,15 @@ signed with the same key, so updates install over the top and keep your settings
 | VPN (user consent) | To start and stop the per-app tunnel |
 | Display over other apps | To draw the floating button |
 | Foreground service, notifications | To keep the button alive over the other app |
-| Access network state | To hand the target app your current DNS servers |
-| Usage access (optional, off unless you turn it on) | To see which app is on screen, for "only show the button over the target app" and "take the tunnel down when I leave it" |
+| Access network state | To read your network's DNS servers and Private DNS setting, so name lookups keep working for the ticked apps while the tunnel is up |
+| Usage access (optional, off unless you turn it on) | To see which app is on screen, for "only show the button while a ticked app is on screen" and "take the tunnel down when I leave the ticked apps" |
 | Ask to ignore battery optimisations | To offer Android's own "run in the background" prompt, so the button is not closed |
 
 SocketFlip has no `INTERNET` permission, collects nothing and sends nothing.
 
 ## Building
 
-Requires JDK 17 and the Android SDK (platform 36).
+Requires JDK 17 and the Android SDK (platform 37).
 
 ```sh
 ./gradlew assembleDebug
