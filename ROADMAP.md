@@ -21,8 +21,6 @@ ship. Ideas and requests are welcome in the
 - [x] Opening SocketFlip never switches off your other VPN app (per-app VPNs
       included), and an Always-on VPN is explained with a button to Android's
       VPN settings (1.6)
-- [x] No extra disconnect when your Wi-Fi renews its address and lists the same
-      DNS servers in a different order (1.10)
 - [x] Settings page (1.7)
 - [x] Adjustable cooldown between taps (1.7)
 - [x] Vibration and hint messages can be turned off (1.7)
@@ -36,6 +34,8 @@ ship. Ideas and requests are welcome in the
       Usage Access) (1.9)
 - [x] Take the tunnel down when you leave the target apps, so the VPN key does not
       linger (1.9)
+- [x] No extra disconnect when your Wi-Fi renews its address and lists the same
+      DNS servers in a different order (1.10)
 - [x] More than one target app: tick as many as you like and each tap reconnects
       all of them (1.10)
 - [x] Each target app can have its own cooldown, with Cooldown and Remove buttons
@@ -75,8 +75,7 @@ ship. Ideas and requests are welcome in the
       works from black, and layouts that fit large text, tablets and landscape (1.14)
 - [x] Ready for translators: every piece of text in one file, and setup check
       reports that stay in English (1.14)
-- [x] Built with current Android tools, targets Android 16 (1.14)
-- [x] Targets Android 17 (1.14)
+- [x] Built with current Android tools, targets Android 17 (1.14)
 - [x] Name lookups keep working inside the tunnel when Private DNS is set to a
       provider name, with Private DNS still on (1.15)
 - [x] Flip counter: the button shows reconnects this game and warns at a limit you
